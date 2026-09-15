@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}EntrySafe — Preferences & Settings{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/user_settings/user_settings.css' %}">
+{% endblock %}
+
+{% block body_class %}clay-canvas min-h-screen w-full flex items-center justify-center text-on-surface font-body-md antialiased p-4 md:p-8{% endblock %}
+
+{% block content %}
+<main class="w-full max-w-[560px] z-10 my-auto py-3">
+  <div class="clay-container rounded-[28px] p-6 md:p-8 flex flex-col gap-6 shadow-2xl">
+    
+    <!-- Top Header & Home Link -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl clay-crest-icon flex items-center justify-center text-white shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">tune</span>
+        </div>
+        <div>
+          <h1 class="font-headline-md text-xl md:text-2xl text-on-surface font-bold">Preferences &amp; Settings</h1>
+          <p class="text-xs md:text-sm text-on-surface-variant">Configure your personal preferences</p>
+        </div>
+      </div>
+      <a href="{% url 'home:home' %}" class="clay-btn-secondary p-2.5 rounded-xl text-on-surface-variant hover:text-primary transition-all inline-flex items-center" title="Back to Home Dashboard">
+        <span class="material-symbols-outlined text-xl">home</span>
+      </a>
+    </div>
+
+    <!-- Navigation Tabs Switcher (Profile vs Settings) -->
+    <div class="clay-segmented-track rounded-2xl p-1.5 grid grid-cols-2 gap-1.5" role="tablist">
+      <a href="{% url 'profile:profile' %}" class="clay-role-pill flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-center font-medium text-xs md:text-sm text-on-surface-variant hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-lg">person</span>
+        <span>Profile Details</span>
+      </a>
+      <a href="{% url 'user_settings:settings' %}" class="clay-role-pill clay-role-pill-active flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-center font-bold text-xs md:text-sm">
+        <span class="material-symbols-outlined text-lg">tune</span>
+        <span>Preferences &amp; Settings</span>
+      </a>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="flex flex-col gap-4">
+      {% csrf_token %}
+
+      <!-- Dark Mode Option -->
+      <div class="clay-card rounded-2xl p-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl clay-surface-chip flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-xl">dark_mode</span>
+          </div>
+          <div>
+            <span class="text-xs md:text-sm text-on-surface font-bold block">Dark Mode</span>
+            <span class="text-xs text-on-surface-variant">Switch between light and dark themes</span>
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="dark_mode" class="sr-only peer" {% if settings.dark_mode %}checked{% endif %}>
+          <div class="w-11 h-6 bg-[#DFE8E2] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+        </label>
+      </div>
+
+      <!-- Email Notifications Option -->
+      <div class="clay-card rounded-2xl p-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl clay-surface-chip flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-xl">notifications</span>
+          </div>
+          <div>
+            <span class="text-xs md:text-sm text-on-surface font-bold block">Email Notifications</span>
+            <span class="text-xs text-on-surface-variant">Receive security access updates &amp; alerts</span>
+          </div>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="email_notifications" class="sr-only peer" {% if settings.email_notifications %}checked{% endif %}>
+          <div class="w-11 h-6 bg-[#DFE8E2] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+        </label>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-[#D8E2DA]">
+        <a href="{% url 'home:home' %}" class="clay-btn-secondary px-4 py-2.5 rounded-xl text-xs md:text-sm text-on-surface-variant font-semibold inline-flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-base">arrow_back</span>
+          <span>Dashboard</span>
+        </a>
+        <button type="submit" class="clay-submit-btn px-6 py-3 rounded-2xl text-xs md:text-sm font-bold inline-flex items-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all">
+          <span class="material-symbols-outlined text-lg">save</span>
+          <span>Save Preferences</span>
+        </button>
+      </div>
+    </form>
+
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/user_settings/user_settings.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}EntrySafe — Resident Onboarding & Verification Portal{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/register/register.css' %}">
+<style>
+  .step-transition {
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .step-hidden {
+    display: none !important;
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .step-active {
+    display: flex !important;
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+{% endblock %}
+
+{% block body_class %}clay-canvas-bg text-on-surface min-h-screen flex items-center justify-center p-3 md:p-6 antialiased overflow-x-hidden{% endblock %}
+
+{% block content %}
+<main class="w-full max-w-[580px] mx-auto my-auto z-10 py-3">
+  <!-- Main Clay Card Modal (Extruded Tactile Chassis) -->
+  <div class="clay-card-extruded p-6 md:p-8 rounded-[28px] flex flex-col gap-5 shadow-2xl">
+    
+    <!-- HEADER BAR WITH TWO-STEP INDICATOR -->
+    <header class="flex flex-col gap-3 pb-3 border-b border-[#D8E2DA]">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl clay-crest-icon flex items-center justify-center text-white shrink-0 shadow-sm">
+            <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">shield</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-headline-md text-xl md:text-2xl text-primary tracking-tight font-bold">EntrySafe</span>
+              <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-semibold">Onboarding</span>
+            </div>
+            <p class="text-xs md:text-sm text-on-surface-variant font-medium">Resident Verification Portal</p>
+          </div>
+        </div>
+
+        <a class="text-xs font-semibold text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1" href="{% url 'login:login' %}">
+          <span class="material-symbols-outlined text-sm">login</span>
+          <span>Sign In</span>
+        </a>
+      </div>
+
+      <!-- Step Progress Bar Indicator -->
+      <div class="flex items-center justify-between gap-3 pt-1">
+        <!-- Step 1 Indicator -->
+        <div class="flex items-center gap-2" id="step1Indicator">
+          <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-sm" id="step1Badge">
+            1
+          </div>
+          <span class="text-xs font-bold text-on-surface" id="step1Text">Account Info</span>
+        </div>
+
+        <!-- Connector Line -->
+        <div class="flex-1 h-1 rounded-full bg-[#D4E0D7] relative overflow-hidden">
+          <div class="h-full bg-emerald-600 transition-all duration-300 w-0" id="progressLine"></div>
+        </div>
+
+        <!-- Step 2 Indicator -->
+        <div class="flex items-center gap-2" id="step2Indicator">
+          <div class="w-6 h-6 rounded-full bg-[#DFE8E2] text-on-surface-variant flex items-center justify-center text-xs font-bold transition-all" id="step2Badge">
+            2
+          </div>
+          <span class="text-xs font-medium text-on-surface-variant" id="step2Text">Residency</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Error Alert Display (if any) -->
+    {% if error %}
+    <div class="p-3 rounded-2xl bg-red-50 text-red-800 text-xs md:text-sm font-medium flex items-center gap-2 border border-red-200 shadow-sm animate-fadeIn" id="serverErrorAlert">
+      <span class="material-symbols-outlined text-red-600 text-base flex-shrink-0">error</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Client-side Validation Alert (hidden by default) -->
+    <div class="p-3 rounded-2xl bg-amber-50 text-amber-900 text-xs md:text-sm font-medium hidden items-center gap-2 border border-amber-200 shadow-sm" id="clientErrorAlert">
+      <span class="material-symbols-outlined text-amber-600 text-base flex-shrink-0">warning</span>
+      <span id="clientErrorText">Please fill in all required fields.</span>
+    </div>
+
+    <!-- MAIN TWO-STEP FORM -->
+    <form class="flex flex-col gap-4" id="registrationForm" action="{% url 'register:register' %}" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <!-- ============================================================ -->
+      <!-- STEP 1: ACCOUNT INFORMATION -->
+      <!-- ============================================================ -->
+      <div class="flex flex-col gap-4 step-transition step-active" id="step1Section">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-xl">badge</span>
+            <h2 class="text-base font-bold text-on-surface">Step 1: Account Information</h2>
+          </div>
+          <span class="text-xs text-on-surface-variant font-medium">1 of 2</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Full Name -->
+          <div class="flex flex-col gap-1.5 sm:col-span-2">
+            <label class="text-xs text-on-surface font-semibold ml-1" for="fullName">
+              Full Name <span class="text-emerald-700">*</span>
+            </label>
+            <div class="clay-recessed-input rounded-2xl flex items-center px-4 py-3 gap-3">
+              <span class="material-symbols-outlined text-outline text-lg">person</span>
+              <input 
+                class="bg-transparent border-none text-on-surface text-sm w-full focus:ring-0 p-0 placeholder:text-outline focus:outline-none" 
+                id="fullName" 
+                name="fullName" 
+                placeholder="Alexandra Vance" 
+                type="text" 
+                required>
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div class="flex flex-col gap-1.5 sm:col-span-2">
+            <label class="text-xs text-on-surface font-semibold ml-1" for="emailAddress">
+              Email Address <span class="text-emerald-700">*</span>
+            </label>
+            <div class="clay-recessed-input rounded-2xl flex items-center px-4 py-3 gap-3">
+              <span class="material-symbols-outlined text-outline text-lg">mail</span>
+              <input 
+                class="bg-transparent border-none text-on-surface text-sm w-full focus:ring-0 p-0 placeholder:text-outline focus:outline-none" 
+                id="emailAddress" 
+                name="emailAddress" 
+                placeholder="alexandra@domain.com" 
+                type="email" 
+                required>
+            </div>
+          </div>
+
+          <!-- Contact Number -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-on-surface font-semibold ml-1" for="contactNumber">
+              Contact Number
+            </label>
+            <div class="clay-recessed-input rounded-2xl flex items-center px-4 py-3 gap-3">
+              <span class="material-symbols-outlined text-outline text-lg">phone</span>
+              <input 
+                class="bg-transparent border-none text-on-surface text-sm w-full focus:ring-0 p-0 placeholder:text-outline focus:outline-none" 
+                id="contactNumber" 
+                name="contactNumber" 
+                placeholder="+1 (555) 019-2834" 
+                type="tel">
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-on-surface font-semibold ml-1" for="regPassword">
+              Password <span class="text-emerald-700">*</span>
+            </label>
+            <div class="clay-recessed-input rounded-2xl flex items-center px-4 py-3 gap-2 relative">
+              <span class="material-symbols-outlined text-outline text-lg">lock</span>
+              <input 
+                class="bg-transparent border-none text-on-surface text-sm w-full focus:ring-0 p-0 placeholder:text-outline tracking-wider focus:outline-none" 
+                id="regPassword" 
+                name="password" 
+                placeholder="••••••••••••" 
+                type="password" 
+                required>
+              <button type="button" id="toggleRegPassword" class="text-outline hover:text-on-surface p-1 focus:outline-none cursor-pointer">
+                <span class="material-symbols-outlined text-lg" id="regToggleIcon">visibility</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Notice -->
+        <aside class="clay-amber-pill rounded-2xl p-3 flex items-center gap-2.5 mt-1">
+          <span class="material-symbols-outlined text-xl text-amber-900 flex-shrink-0" style="font-variation-settings: 'FILL' 1;">shield</span>
+          <p class="text-xs text-amber-950 font-medium leading-relaxed">
+            <strong>Security Protocol:</strong> Next, you will attach residency details to verify condominium access.
+          </p>
+        </aside>
+
+        <!-- Step 1 Actions -->
+        <div class="pt-3 border-t border-[#D8E2DA] flex items-center justify-between gap-3">
+          <a class="text-xs text-on-surface-variant hover:text-primary font-semibold flex items-center gap-1 cursor-pointer" href="{% url 'login:login' %}">
+            <span class="material-symbols-outlined text-base">arrow_back</span>
+            <span>Return to Sign In</span>
+          </a>
+
+          <button class="clay-submit-btn px-6 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all" id="btnGoToStep2" type="button">
+            <span>Continue to Residency</span>
+            <span class="material-symbols-outlined text-lg">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- STEP 2: RESIDENCY VERIFICATION -->
+      <!-- ============================================================ -->
+      <div class="flex flex-col gap-4 step-transition step-hidden" id="step2Section">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-xl">apartment</span>
+            <h2 class="text-base font-bold text-on-surface">Step 2: Residency Verification</h2>
+          </div>
+          <span class="text-xs text-on-surface-variant font-medium">2 of 2</span>
+        </div>
+
+        <!-- Tower Residence Selector -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-on-surface font-semibold ml-1">Select Tower Residence</label>
+          <input type="hidden" name="tower" id="selectedTower" value="1">
+          <div class="grid grid-cols-4 gap-2.5" id="towerContainer">
+            
+            <!-- Tower 1 -->
+            <button class="clay-tower-item clay-btn-active-indigo rounded-2xl p-2.5 flex flex-col items-center justify-center gap-1 text-center transition-all cursor-pointer" type="button" data-tower="1">
+              <span class="material-symbols-outlined text-lg">apartment</span>
+              <span class="tower-label text-xs font-bold">Tower 1</span>
+            </button>
+
+            <!-- Tower 2 -->
+            <button class="clay-tower-item clay-tower-btn rounded-2xl p-2.5 flex flex-col items-center justify-center gap-1 text-center group transition-all cursor-pointer" type="button" data-tower="2">
+              <span class="material-symbols-outlined text-lg text-outline group-hover:text-primary">apartment</span>
+              <span class="tower-label text-xs font-bold text-on-surface">Tower 2</span>
+            </button>
+
+            <!-- Tower 3 -->
+            <button class="clay-tower-item clay-tower-btn rounded-2xl p-2.5 flex flex-col items-center justify-center gap-1 text-center group transition-all cursor-pointer" type="button" data-tower="3">
+              <span class="material-symbols-outlined text-lg text-outline group-hover:text-primary">apartment</span>
+              <span class="tower-label text-xs font-bold text-on-surface">Tower 3</span>
+            </button>
+
+            <!-- Tower 4 -->
+            <button class="clay-tower-item clay-tower-btn rounded-2xl p-2.5 flex flex-col items-center justify-center gap-1 text-center group transition-all cursor-pointer" type="button" data-tower="4">
+              <span class="material-symbols-outlined text-lg text-outline group-hover:text-primary">apartment</span>
+              <span class="tower-label text-xs font-bold text-on-surface">Tower 4</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Unit Number & Occupancy Type Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-end">
+          <!-- Unit Number -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-on-surface font-semibold ml-1" for="unitNumber">Unit / Room Number</label>
+            <div class="clay-recessed-input rounded-2xl flex items-center px-4 py-3 gap-2.5">
+              <span class="material-symbols-outlined text-outline text-lg">meeting_room</span>
+              <input 
+                class="bg-transparent border-none text-on-surface text-sm w-full focus:ring-0 p-0 placeholder:text-outline focus:outline-none" 
+                id="unitNumber" 
+                name="unitNumber" 
+                placeholder="e.g., Unit 1408" 
+                type="text">
+            </div>
+          </div>
+
+          <!-- Occupancy Type Toggle -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-on-surface font-semibold ml-1">Occupancy Type</label>
+            <input type="hidden" name="occupancyType" id="occupancyType" value="owner">
+            <div class="clay-toggle-track p-1.5 rounded-2xl flex items-center gap-1.5 h-[46px]">
+              <button id="btnOwner" class="clay-toggle-active flex-1 h-full rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer" type="button">
+                <span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">key</span>
+                <span>Unit Owner</span>
+              </button>
+              <button id="btnTenant" class="flex-1 h-full rounded-xl flex items-center justify-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-all font-medium cursor-pointer" type="button">
+                <span class="material-symbols-outlined text-base text-outline">contract</span>
+                <span>Tenant</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proof of Residency Upload Box -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs text-on-surface font-semibold ml-1">Proof of Residency (Lease Contract or Utility Bill)</label>
+          <div class="clay-dropzone rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer relative overflow-hidden">
+            <input type="file" name="proofDocument" id="proofDocInput" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" accept=".pdf,.png,.jpg,.jpeg">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-xl clay-surface-chip flex items-center justify-center text-primary flex-shrink-0">
+                <span class="material-symbols-outlined text-xl">upload_file</span>
+              </div>
+              <div class="truncate text-left">
+                <span id="fileNameDisplay" class="block text-xs md:text-sm text-on-surface font-semibold truncate">lease_contract_unit1408.pdf</span>
+                <span class="block text-[11px] text-emerald-700 font-medium">Click or drag file (PDF, PNG, JPG)</span>
+              </div>
+            </div>
+            <span class="text-xs px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold shrink-0 shadow-sm">Browse</span>
+          </div>
+        </div>
+
+        <!-- Step 2 Actions -->
+        <div class="pt-3 border-t border-[#D8E2DA] flex items-center justify-between gap-3">
+          <button class="clay-btn-secondary px-5 py-3 rounded-2xl text-xs md:text-sm font-semibold flex items-center gap-1.5 cursor-pointer" id="btnBackToStep1" type="button">
+            <span class="material-symbols-outlined text-base">arrow_back</span>
+            <span>Back</span>
+          </button>
+
+          <button class="clay-submit-btn px-7 py-3.5 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all" id="btnSubmitForm" type="submit">
+            <span>Submit Verification Request</span>
+            <span class="material-symbols-outlined text-lg">check_circle</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/register/register.js' %}"></script>
+<script>
+  // DOM Elements for Stepper
+  const step1Section = document.getElementById('step1Section');
+  const step2Section = document.getElementById('step2Section');
+  const btnGoToStep2 = document.getElementById('btnGoToStep2');
+  const btnBackToStep1 = document.getElementById('btnBackToStep1');
+  const step1Badge = document.getElementById('step1Badge');
+  const step2Badge = document.getElementById('step2Badge');
+  const step2Text = document.getElementById('step2Text');
+  const progressLine = document.getElementById('progressLine');
+  const clientErrorAlert = document.getElementById('clientErrorAlert');
+  const clientErrorText = document.getElementById('clientErrorText');
+  const serverErrorAlert = document.getElementById('serverErrorAlert');
+
+  // Input fields
+  const fullName = document.getElementById('fullName');
+  const emailAddress = document.getElementById('emailAddress');
+  const regPassword = document.getElementById('regPassword');
+
+  function showStep(stepNumber) {
+    if (clientErrorAlert) clientErrorAlert.classList.add('hidden');
+    if (clientErrorAlert) clientErrorAlert.classList.remove('flex');
+
+    if (stepNumber === 1) {
+      step1Section.classList.remove('step-hidden');
+      step1Section.classList.add('step-active');
+
+      step2Section.classList.add('step-hidden');
+      step2Section.classList.remove('step-active');
+
+      // Update stepper header
+      step1Badge.className = 'w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-sm';
+      step1Badge.innerHTML = '1';
+
+      step2Badge.className = 'w-6 h-6 rounded-full bg-[#DFE8E2] text-on-surface-variant flex items-center justify-center text-xs font-bold transition-all';
+      step2Text.className = 'text-xs font-medium text-on-surface-variant';
+
+      progressLine.style.width = '0%';
+    } else if (stepNumber === 2) {
+      step1Section.classList.add('step-hidden');
+      step1Section.classList.remove('step-active');
+
+      step2Section.classList.remove('step-hidden');
+      step2Section.classList.add('step-active');
+
+      // Update stepper header
+      step1Badge.className = 'w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold shadow-sm';
+      step1Badge.innerHTML = '<span class="material-symbols-outlined text-sm text-emerald-700 font-bold">check</span>';
+
+      step2Badge.className = 'w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-sm';
+      step2Text.className = 'text-xs font-bold text-on-surface';
+
+      progressLine.style.width = '100%';
+    }
+  }
+
+  function validateStep1() {
+    if (!fullName.value.trim()) {
+      showError('Please enter your full name.');
+      fullName.focus();
+      return false;
+    }
+    if (!emailAddress.value.trim() || !emailAddress.checkValidity()) {
+      showError('Please enter a valid email address.');
+      emailAddress.focus();
+      return false;
+    }
+    if (!regPassword.value) {
+      showError('Please create a password for your account.');
+      regPassword.focus();
+      return false;
+    }
+    return true;
+  }
+
+  function showError(msg) {
+    if (clientErrorAlert && clientErrorText) {
+      clientErrorText.textContent = msg;
+      clientErrorAlert.classList.remove('hidden');
+      clientErrorAlert.classList.add('flex');
+    }
+  }
+
+  if (btnGoToStep2) {
+    btnGoToStep2.addEventListener('click', () => {
+      if (validateStep1()) {
+        showStep(2);
+      }
+    });
+  }
+
+  if (btnBackToStep1) {
+    btnBackToStep1.addEventListener('click', () => {
+      showStep(1);
+    });
+  }
+
+  // Handle enter key in step 1 inputs to move to step 2 smoothly
+  [fullName, emailAddress, regPassword].forEach(input => {
+    if (input) {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (validateStep1()) {
+            showStep(2);
+          }
+        }
+      });
+    }
+  });
+
+  // Password Visibility Toggle
+  const toggleRegPassword = document.getElementById('toggleRegPassword');
+  const regToggleIcon = document.getElementById('regToggleIcon');
+  if (toggleRegPassword && regPassword && regToggleIcon) {
+    toggleRegPassword.addEventListener('click', () => {
+      const isPassword = regPassword.type === 'password';
+      regPassword.type = isPassword ? 'text' : 'password';
+      regToggleIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+    });
+  }
+
+  // Tower selection logic
+  const towerButtons = document.querySelectorAll('.clay-tower-item');
+  const towerInput = document.getElementById('selectedTower');
+  towerButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const towerId = btn.getAttribute('data-tower');
+      if (towerInput) towerInput.value = towerId;
+      towerButtons.forEach(b => {
+        b.className = 'clay-tower-item clay-tower-btn rounded-2xl p-2.5 flex flex-col items-center justify-center gap-1 text-center group transition-all cursor-pointer';
+        const icon = b.querySelector('.material-symbols-outlined');
+        if (icon) icon.className = 'material-symbols-outlined text-lg text-outline group-hover:text-primary';
+        const label = b.querySelector('.tower-label');
+        if (label) label.className = 'tower-label text-xs font-bold text-on-surface';
+      });
+
+      btn.className = 'clay-tower-item clay-btn-active-indigo rounded-2xl p-2.5 flex flex-col items-center justify-center gap-1 text-center transition-all cursor-pointer';
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (icon) icon.className = 'material-symbols-outlined text-lg text-white';
+      const label = btn.querySelector('.tower-label');
+      if (label) label.className = 'tower-label text-xs font-bold text-white';
+    });
+  });
+
+  // Occupancy toggle logic
+  const btnOwner = document.getElementById('btnOwner');
+  const btnTenant = document.getElementById('btnTenant');
+  const occupancyInput = document.getElementById('occupancyType');
+  if (btnOwner && btnTenant && occupancyInput) {
+    btnOwner.addEventListener('click', () => {
+      occupancyInput.value = 'owner';
+      btnOwner.className = 'clay-toggle-active flex-1 h-full rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer';
+      btnTenant.className = 'flex-1 h-full rounded-xl flex items-center justify-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-all font-medium cursor-pointer';
+    });
+    btnTenant.addEventListener('click', () => {
+      occupancyInput.value = 'tenant';
+      btnTenant.className = 'clay-toggle-active flex-1 h-full rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all cursor-pointer';
+      btnOwner.className = 'flex-1 h-full rounded-xl flex items-center justify-center gap-1.5 text-xs text-on-surface-variant hover:text-on-surface transition-all font-medium cursor-pointer';
+    });
+  }
+
+  // File Upload Name Display
+  const proofDocInput = document.getElementById('proofDocInput');
+  const fileNameDisplay = document.getElementById('fileNameDisplay');
+  if (proofDocInput && fileNameDisplay) {
+    proofDocInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        fileNameDisplay.textContent = e.target.files[0].name;
+      }
+    });
+  }
+</script>
+{% endblock %}

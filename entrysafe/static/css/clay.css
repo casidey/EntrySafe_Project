@@ -1,0 +1,568 @@
+/* ==========================================================================
+   EntrySafe — Emerald & Forest Green Claymorphism Design System
+   Complete Production Stylesheet (Zero Template Edits Required)
+   ========================================================================== */
+
+:root {
+  /* Primary Green Palette */
+  --clay-emerald-light: #10B981;
+  --clay-emerald-primary: #059669;
+  --clay-forest-deep: #047857;
+  --clay-forest-dark: #006948;
+  --clay-pine-dark: #162B21;
+
+  /* Porcelain & Sage Ground Surfaces */
+  --clay-canvas-bg: #EEF3F0;
+  --clay-card-chassis: #EDF3EF;
+  --clay-surface-card: #EBF2EC;
+  --clay-recessed-cavity: #E2EAE4;
+  --clay-subcard-well: #E6EEE8;
+  --clay-track-well: #DFE8E2;
+
+  /* Lighting & Specular Highlights */
+  --clay-shadow-light: #FFFFFF;
+  --clay-shadow-dark: #CAD7CE;
+  --clay-shadow-deep: #BDCBBF;
+  --clay-glow-emerald: rgba(5, 150, 105, 0.38);
+}
+
+/* --------------------------------------------------------------------------
+   1. Canvas & Ambient Atmosphere
+   -------------------------------------------------------------------------- */
+.clay-canvas {
+  background-color: var(--clay-canvas-bg) !important;
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(255, 255, 255, 0.9) 0px, transparent 45%),
+    radial-gradient(at 85% 85%, rgba(197, 212, 203, 0.48) 0px, transparent 55%),
+    radial-gradient(at 50% 50%, rgba(240, 246, 242, 0.6) 0px, transparent 60%) !important;
+}
+
+.clay-canvas-bg {
+  background-color: #E8EFEA !important;
+}
+
+/* Ambient sphere glow tint */
+.bg-indigo-100 {
+  background-color: #D1FAE5 !important;
+}
+
+::selection {
+  background-color: var(--clay-emerald-primary) !important;
+  color: #FFFFFF !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. Floating Tactile Chassis & Cards
+   -------------------------------------------------------------------------- */
+.clay-container {
+  background-color: var(--clay-card-chassis) !important;
+  box-shadow: 
+    18px 18px 36px var(--clay-shadow-dark),
+    -18px -18px 36px var(--clay-shadow-light),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px rgba(22, 29, 26, 0.03) !important;
+}
+
+.clay-card-extruded {
+  background-color: #EEF4F0 !important;
+  box-shadow: 
+    18px 18px 40px #C7D4CC,
+    -18px -18px 40px var(--clay-shadow-light),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px rgba(0, 50, 25, 0.03) !important;
+  border-radius: 28px !important;
+}
+
+.clay-card {
+  background-color: var(--clay-surface-card) !important;
+  box-shadow: 
+    10px 10px 22px #C7D4C9,
+    -10px -10px 22px var(--clay-shadow-light),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.85),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.clay-card-interactive {
+  background-color: var(--clay-surface-card) !important;
+  box-shadow: 
+    6px 6px 14px #C7D4C9,
+    -6px -6px 14px var(--clay-shadow-light),
+    inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.9),
+    inset -1.5px -1.5px 3px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.clay-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    9px 9px 18px #BDCBBF,
+    -9px -9px 18px var(--clay-shadow-light),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.95),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.clay-card-interactive:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 
+    2px 2px 6px #C7D4C9,
+    -2px -2px 6px var(--clay-shadow-light),
+    inset 3px 3px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+.clay-sidebar {
+  background-color: var(--clay-surface-card) !important;
+  box-shadow: 
+    14px 0 28px #C7D4C9,
+    inset -2px 0 4px rgba(0, 0, 0, 0.03),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.9) !important;
+}
+
+.clay-subcard {
+  background-color: var(--clay-subcard-well) !important;
+  box-shadow: 
+    inset 2px 2px 5px var(--clay-shadow-dark),
+    inset -2px -2px 5px var(--clay-shadow-light) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Recessed Inset Cavities (Inputs & Wells)
+   -------------------------------------------------------------------------- */
+.clay-recessed-field,
+.clay-recessed-input {
+  background-color: var(--clay-recessed-cavity) !important;
+  box-shadow: 
+    inset 3px 3px 6px var(--clay-shadow-dark),
+    inset -3px -3px 6px var(--clay-shadow-light) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.clay-recessed-field:focus-within,
+.clay-recessed-input:focus-within {
+  box-shadow: 
+    inset 3px 3px 6px rgba(5, 150, 105, 0.25),
+    inset -2px -2px 4px var(--clay-shadow-light),
+    0 0 0 2px rgba(16, 185, 129, 0.4) !important;
+}
+
+.clay-inset-well {
+  background-color: #DEE7DF !important;
+  box-shadow: 
+    inset 4px 4px 8px #C5D2C7,
+    inset -4px -4px 8px var(--clay-shadow-light) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. Tactile Extruded Buttons (Lush Emerald Glow)
+   -------------------------------------------------------------------------- */
+.clay-btn-primary,
+.clay-submit-btn {
+  background: linear-gradient(135deg, #10B981 0%, #059669 60%, #047857 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    6px 6px 18px var(--clay-glow-emerald),
+    -4px -4px 12px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.55),
+    inset -2px -2px 3px rgba(0, 40, 20, 0.25) !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.clay-btn-primary:hover,
+.clay-submit-btn:hover {
+  background: linear-gradient(135deg, #18C88F 0%, #04885E 100%) !important;
+  box-shadow: 
+    8px 10px 22px rgba(5, 150, 105, 0.48),
+    -5px -5px 14px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.65) !important;
+  transform: translateY(-1.5px);
+}
+
+.clay-btn-primary:active,
+.clay-submit-btn:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 
+    2px 2px 6px rgba(5, 150, 105, 0.3),
+    inset 3px 3px 6px rgba(0, 30, 15, 0.35) !important;
+}
+
+/* Secondary Porcelain Action */
+.clay-btn-secondary,
+.clay-secondary-btn {
+  background-color: #EDF3EF !important;
+  color: #162B21 !important;
+  box-shadow: 
+    4px 4px 9px var(--clay-shadow-dark),
+    -4px -4px 9px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.9),
+    inset -1.5px -1.5px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.clay-btn-secondary:hover,
+.clay-secondary-btn:hover {
+  transform: translateY(-1px);
+  color: var(--clay-emerald-primary) !important;
+  box-shadow: 
+    3px 3px 8px var(--clay-shadow-dark),
+    -3px -3px 8px var(--clay-shadow-light) !important;
+}
+
+.clay-btn-secondary:active,
+.clay-secondary-btn:active {
+  transform: translateY(1px);
+  box-shadow: 
+    2px 2px 4px var(--clay-shadow-dark),
+    inset 2px 2px 4px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Dark Pine Action */
+.clay-btn-dark {
+  background-color: var(--clay-pine-dark) !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    6px 6px 14px rgba(22, 43, 33, 0.35),
+    -5px -5px 10px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.35),
+    inset -2px -2px 3px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.15s ease-out !important;
+}
+
+.clay-btn-dark:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 
+    8px 8px 16px rgba(22, 43, 33, 0.4),
+    -5px -5px 12px var(--clay-shadow-light) !important;
+}
+
+.clay-btn-dark:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Coral Emergency Action */
+.clay-btn-coral {
+  background-color: #EF4444 !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    6px 6px 14px rgba(239, 68, 68, 0.35),
+    -5px -5px 10px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.55),
+    inset -2px -2px 3px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.15s ease-out !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. Role Access Switcher (Login Persona Track & Interactive Animation)
+   -------------------------------------------------------------------------- */
+.clay-segmented-track {
+  background-color: var(--clay-track-well) !important;
+  box-shadow: 
+    inset 3px 3px 6px #C2CEC6,
+    inset -3px -3px 6px var(--clay-shadow-light) !important;
+}
+
+/* Base style for all persona role buttons */
+.clay-role-pill {
+  background-color: transparent;
+  color: #4A5B52;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  user-select: none;
+  cursor: pointer;
+  border-radius: 12px !important;
+}
+
+.clay-role-pill:hover {
+  background-color: #E6EEE8;
+  color: #162B21;
+}
+
+/* ACTIVE Role Persona Button (Solid Emerald Cushion) */
+.clay-role-pill.clay-role-pill-active,
+.clay-role-pill-active {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    4px 4px 12px var(--clay-glow-emerald),
+    -2px -2px 6px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.55),
+    inset -2px -2px 3px rgba(0, 40, 20, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+.clay-role-pill.clay-role-pill-active span,
+.clay-role-pill-active span {
+  color: #FFFFFF !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. "Forgot Password" Link (Solid Pitch Black)
+   -------------------------------------------------------------------------- */
+a[href="#recovery"],
+a[href*="recovery"],
+a.text-primary[href="#recovery"] {
+  color: #111827 !important; /* Pitch Black */
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease-in-out;
+}
+
+a[href="#recovery"]:hover,
+a[href*="recovery"]:hover,
+a.text-primary[href="#recovery"]:hover {
+  color: #000000 !important;
+  text-decoration: underline !important;
+}
+
+/* --------------------------------------------------------------------------
+   7. Registration Tower Selector Buttons
+   -------------------------------------------------------------------------- */
+/* Inactive Tower (Visible Porcelain-Sage 3D Relief) */
+.clay-tower-item,
+.clay-tower-btn {
+  background-color: #EEF4F0 !important;
+  border: 1px solid rgba(16, 185, 129, 0.15) !important;
+  box-shadow: 
+    5px 5px 12px #CBD7D0,
+    -5px -5px 12px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2.5px rgba(255, 255, 255, 0.95),
+    inset -1.5px -1.5px 2px rgba(0, 40, 20, 0.02) !important;
+  color: #162B21 !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  cursor: pointer;
+}
+
+.clay-tower-item:hover,
+.clay-tower-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 
+    7px 7px 16px #C2CEC6,
+    -7px -7px 16px var(--clay-shadow-light),
+    inset 1.5px 1.5px 3px rgba(255, 255, 255, 0.95) !important;
+}
+
+.clay-tower-item .tower-label,
+.clay-tower-btn span {
+  color: #162B21 !important;
+  font-weight: 700 !important;
+}
+
+.clay-tower-item .tower-icon-box {
+  background-color: #DEE7DF !important;
+  color: #4A5B52 !important;
+  box-shadow: inset 1px 1px 2px #C5D2C7, inset -1px -1px 2px #FFFFFF !important;
+}
+
+/* ACTIVE Selected Tower (Lush Emerald Gradient) */
+.clay-tower-item.clay-btn-active-indigo,
+.clay-tower-item.clay-btn-active-emerald,
+.clay-btn-active-indigo,
+.clay-btn-active-emerald {
+  background: linear-gradient(135deg, #10B981 0%, #059669 60%, #047857 100%) !important;
+  color: #FFFFFF !important;
+  border-color: transparent !important;
+  box-shadow: 
+    6px 8px 20px rgba(5, 150, 105, 0.42),
+    -4px -4px 12px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.65),
+    inset -2px -2px 4px rgba(0, 35, 15, 0.3) !important;
+}
+
+.clay-tower-item.clay-btn-active-indigo .tower-label,
+.clay-tower-item.clay-btn-active-emerald .tower-label,
+.clay-btn-active-indigo span,
+.clay-btn-active-emerald span {
+  color: #FFFFFF !important;
+}
+
+.clay-tower-item.clay-btn-active-indigo .tower-icon-box,
+.clay-tower-item.clay-btn-active-emerald .tower-icon-box {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  color: #FFFFFF !important;
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Occupancy Toggles & Form Dropzone
+   -------------------------------------------------------------------------- */
+.clay-toggle-track {
+  background-color: var(--clay-track-well) !important;
+  box-shadow: 
+    inset 3px 3px 6px #C2CEC6,
+    inset -3px -3px 6px var(--clay-shadow-light) !important;
+}
+
+.clay-toggle-active {
+  background-color: #EEF4F0 !important;
+  box-shadow: 
+    4px 4px 10px #CBD7D0,
+    -3px -3px 8px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2.5px rgba(255, 255, 255, 0.95),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.04) !important;
+  color: var(--clay-forest-deep) !important;
+}
+
+.clay-toggle-active span {
+  color: var(--clay-forest-deep) !important;
+}
+
+.clay-checkbox {
+  background-color: var(--clay-recessed-cavity) !important;
+  box-shadow: 
+    inset 2px 2px 4px var(--clay-shadow-dark),
+    inset -2px -2px 4px var(--clay-shadow-light) !important;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.clay-checkbox:checked {
+  background-color: var(--clay-emerald-primary) !important;
+  box-shadow: 
+    inset 1px 1px 2px rgba(255, 255, 255, 0.45),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+.clay-checkbox:checked::after {
+  content: '✓';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.clay-dropzone {
+  background-color: #E4ECE6 !important;
+  box-shadow: 
+    inset 4px 4px 10px #C4D2C9,
+    inset -4px -4px 10px var(--clay-shadow-light) !important;
+  border: 2px dashed #AEC0B4 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.clay-dropzone:hover {
+  background-color: #DBE7DE !important;
+  border-color: var(--clay-emerald-primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   9. Pills, Badges & Micro-Reliefs
+   -------------------------------------------------------------------------- */
+.clay-pill-status,
+.clay-surface-chip,
+.clay-badge-soft {
+  background-color: #EDF3EF !important;
+  box-shadow: 
+    4px 4px 10px #D0DCD3,
+    -4px -4px 10px var(--clay-shadow-light),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+.clay-crest-icon {
+  background: linear-gradient(135deg, #10B981 0%, #006948 100%) !important;
+  box-shadow: 
+    6px 6px 12px rgba(0, 105, 72, 0.35),
+    -4px -4px 8px var(--clay-shadow-light),
+    inset 2px 2px 3px rgba(255, 255, 255, 0.6),
+    inset -2px -2px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.clay-avatar {
+  box-shadow: 
+    4px 4px 10px #C7D4C9,
+    -4px -4px 10px var(--clay-shadow-light),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.8) !important;
+}
+
+.clay-pill-emerald {
+  background-color: var(--clay-emerald-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    3px 3px 8px rgba(5, 150, 105, 0.3),
+    -2px -2px 6px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2.5px rgba(255, 255, 255, 0.65),
+    inset -1.5px -1.5px 2.5px rgba(0, 0, 0, 0.18) !important;
+}
+
+.clay-pill-amber {
+  background-color: #F59E0B !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    3px 3px 8px rgba(245, 158, 11, 0.28),
+    -2px -2px 6px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2.5px rgba(255, 255, 255, 0.7),
+    inset -1.5px -1.5px 2.5px rgba(0, 0, 0, 0.15) !important;
+}
+
+.clay-pill-indigo,
+.clay-pill-forest {
+  background-color: var(--clay-forest-dark) !important;
+  color: #FFFFFF !important;
+  box-shadow: 
+    3px 3px 8px rgba(0, 105, 72, 0.35),
+    -2px -2px 6px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2.5px rgba(255, 255, 255, 0.5),
+    inset -1.5px -1.5px 2.5px rgba(0, 0, 0, 0.25) !important;
+}
+
+.clay-amber-pill {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  box-shadow: 
+    5px 5px 12px var(--clay-shadow-dark),
+    -4px -4px 10px var(--clay-shadow-light),
+    inset 1.5px 1.5px 2.5px rgba(255, 255, 255, 0.8),
+    inset -1.5px -1.5px 2px rgba(180, 83, 9, 0.12) !important;
+}
+
+/* --------------------------------------------------------------------------
+   10. Complete Purple-To-Green Utility Overrides (Zero Template Edits Needed)
+   -------------------------------------------------------------------------- */
+/* Brand headings and text */
+h1.text-primary,
+span.text-primary,
+.text-primary,
+.text-primary-container {
+  color: var(--clay-forest-deep) !important;
+}
+
+.text-primary-fixed {
+  color: #A7F3D0 !important;
+}
+
+/* Backgrounds */
+.bg-primary {
+  background-color: var(--clay-emerald-primary) !important;
+}
+
+.bg-primary-container {
+  background-color: var(--clay-emerald-light) !important;
+}
+
+/* Focus and ring highlights */
+.ring-primary,
+.ring-primary\/40,
+.ring-indigo-300\/30 {
+  --tw-ring-color: rgba(5, 150, 105, 0.4) !important;
+}
+
+.shadow-primary\/25 {
+  box-shadow: 0 4px 14px -1px rgba(5, 150, 105, 0.25) !important;
+}
+
+/* Icons */
+.material-symbols-outlined.text-primary {
+  color: var(--clay-emerald-primary) !important;
+}
+
+/* Interactive link hovers */
+.hover\:text-primary:hover,
+.group:hover .group-hover\:text-primary {
+  color: var(--clay-emerald-primary) !important;
+}
+
+span.text-primary.underline {
+  color: var(--clay-emerald-primary) !important;
+}
