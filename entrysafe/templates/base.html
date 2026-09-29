@@ -1,116 +1,30 @@
-{% load static %}
-<!DOCTYPE html>
-<html class="light" lang="en">
+{% load static %}<!DOCTYPE html>
+<html lang="en" data-theme="{{ theme }}"{% if user.is_authenticated %} data-auth{% endif %}>
 <head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>{% block title %}EntrySafe — Security Management{% endblock %}</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#3525cd",
-            "primary-container": "#4f46e5",
-            "primary-fixed": "#e2dfff",
-            "primary-fixed-dim": "#c3c0ff",
-            "on-primary": "#ffffff",
-            "secondary": "#006c49",
-            "secondary-container": "#6cf8bb",
-            "secondary-fixed": "#6ffbbe",
-            "secondary-fixed-dim": "#4edea3",
-            "on-secondary": "#ffffff",
-            "background": "#f5faff",
-            "surface": "#f5faff",
-            "surface-variant": "#dee3e8",
-            "surface-container": "#e9eef3",
-            "surface-container-low": "#eff4f9",
-            "surface-container-high": "#e4e9ee",
-            "surface-container-highest": "#dee3e8",
-            "on-surface": "#171c20",
-            "on-surface-variant": "#464555",
-            "outline": "#777587",
-            "outline-variant": "#c7c4d8",
-            "error": "#ba1a1a",
-            "error-container": "#ffdad6",
-            "tertiary": "#684000",
-            "tertiary-container": "#885500",
-            "tertiary-fixed": "#ffddb8",
-            "tertiary-fixed-dim": "#ffb95f"
-          },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "2xl": "1.25rem",
-            "3xl": "1.5rem",
-            "full": "9999px"
-          },
-          spacing: {
-            "unit-2xs": "4px",
-            "unit-xs": "8px",
-            "unit-sm": "12px",
-            "unit-md": "16px",
-            "unit-lg": "24px",
-            "unit-xl": "32px",
-            "unit-2xl": "48px",
-            "unit-3xl": "64px",
-            "gutter": "24px",
-            "margin": "32px",
-            "sidebar-width": "280px"
-          },
-          fontFamily: {
-            "headline-xl": ["Space Grotesk", "sans-serif"],
-            "headline-lg": ["Space Grotesk", "sans-serif"],
-            "headline-md": ["Space Grotesk", "sans-serif"],
-            "headline-sm": ["Space Grotesk", "sans-serif"],
-            "body-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "body-md": ["Plus Jakarta Sans", "sans-serif"],
-            "body-sm": ["Plus Jakarta Sans", "sans-serif"],
-            "label-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "label-md": ["Plus Jakarta Sans", "sans-serif"],
-            "label-sm": ["Plus Jakarta Sans", "sans-serif"]
-          },
-          fontSize: {
-            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
-            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
-            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
-            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-            "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }],
-            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
-            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
-            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
-            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }]
-          }
-        }
-      }
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}EntrySafe{% endblock %}</title>
+  <script>
+    /* Pick the theme before first paint: the account's saved choice (set by the server),
+       otherwise the last choice on this device, otherwise light. */
+    (function () {
+      var d = document.documentElement, t = d.getAttribute('data-theme');
+      try {
+        if (t && d.hasAttribute('data-auth')) localStorage.setItem('es-theme', t);
+        if (!t) t = localStorage.getItem('es-theme');
+      } catch (e) {}
+      if (t !== 'dark') t = 'light'; /* light unless the user chose dark */
+      d.setAttribute('data-theme', t);
+    })();
   </script>
-
-  <link rel="stylesheet" href="{% static 'css/clay.css' %}">
-
-  <style>
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-      display: inline-block;
-      vertical-align: middle;
-      line-height: 1;
-    }
-  </style>
-  {% block extra_head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/entrysafe-ui.css' %}">
+  {% block head %}{% endblock %}
 </head>
-<body class="{% block body_class %}clay-canvas min-h-screen w-full text-on-surface font-body-md antialiased{% endblock %}">
-  {% block content %}{% endblock %}
-  {% block extra_js %}{% endblock %}
+<body>
+  {% include "partials/_icons.html" %}
+  {% block body %}{% endblock %}
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="{% static 'js/ui/core.js' %}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

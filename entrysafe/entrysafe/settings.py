@@ -49,6 +49,11 @@ INSTALLED_APPS = [
     "apps.home",
     "apps.profile",
     "apps.user_settings",
+    "apps.approvals",
+    "apps.notifications",
+    "apps.audit",
+    "apps.restrictions",
+    "apps.guard",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +78,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.home.context_processors.shell",
             ],
         },
     },
@@ -141,6 +147,11 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# Uploaded files (registration proof documents). These are served only through
+# an admin-protected view, never directly from MEDIA_URL.
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 # Email

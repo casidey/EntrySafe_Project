@@ -1,3 +1,1 @@
-from django.contrib import admin
-
-# Register your models here.
+# Registrations are reviewed through UserProfile (apps/profile/admin.py).

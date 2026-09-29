@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+<div class="app" id="app">
+  <aside class="rail" id="rail" aria-label="Quick navigation">
+    <div class="rail-brand"><svg><use href="#i-mark"/></svg></div>
+    <nav class="rail-nav" id="railNav"><div class="side-hi"></div>
+      {% for n in shell_nav %}<a class="rail-item" href="{{ n.url }}" aria-current="{{ n.current|yesno:'true,false' }}" aria-label="{{ n.label }}" title="{{ n.label }}"><svg><use href="#i-{{ n.icon }}"/></svg></a>{% endfor %}
+    </nav>
+    <div class="rail-foot"><button class="rail-btn" id="railToggle" type="button" aria-label="Toggle section panel"><svg><use href="#i-panel"/></svg></button></div>
+  </aside>
+
+  <aside class="panel" id="panel">
+    <div class="panel-in">
+      <div class="panel-h"><span>{{ shell_panel_title }}</span><button class="rail-btn" id="panelToggle" type="button" aria-label="Collapse section panel"><svg><use href="#i-panel"/></svg></button></div>
+      <nav class="side-nav" id="sideNav" aria-label="Sections"><div class="side-hi" id="sideHi"></div>
+        {% for n in shell_nav %}<a class="side-item" href="{{ n.url }}" aria-current="{{ n.current|yesno:'true,false' }}"><svg><use href="#i-{{ n.icon }}"/></svg><span>{{ n.label }}</span></a>{% endfor %}
+      </nav>
+      <div class="user-block">
+        <div class="user-txt"><b>{{ shell_display_name }}</b><span>{% if shell_unit %}{{ shell_unit }}{% else %}{{ shell_role_label }}{% endif %}</span></div>
+        <a class="rail-btn" href="{% url 'login:logout' %}" aria-label="Sign out" title="Sign out" style="width:32px;height:32px;border-radius:8px"><svg><use href="#i-logout"/></svg></a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main" id="mainScroll">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="tsearch"><svg><use href="#i-search"/></svg><input id="topSearch" type="search" placeholder="Search" aria-label="Filter this page"></div>
+        <a class="btn btn-s btn-sm mob-only" href="{% url 'login:logout' %}">Sign Out</a>
+      </div>
+    </header>
+    <div class="page-head"><h1>{% block page_title %}{% endblock %}</h1><p>{% block page_sub %}{% endblock %}</p></div>
+    <nav class="mobnav" aria-label="Sections" style="margin-top:12px">
+      {% for n in shell_nav %}<a class="mob-item" href="{{ n.url }}" aria-current="{{ n.current|yesno:'true,false' }}">{{ n.label }}</a>{% endfor %}
+    </nav>
+    <main class="content" id="content">
+      {% if messages %}<div class="flash">{% for m in messages %}<div class="alert{% if m.tags == 'success' %} ok{% endif %}" role="status"><svg><use href="#i-{% if m.tags == 'success' %}check2{% else %}alert{% endif %}"/></svg><span>{{ m }}</span></div>{% endfor %}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim2"></div>
+<div class="modal" id="modal2" role="dialog" aria-modal="true" aria-labelledby="modal2Title">
+  <div class="okwrap" id="modal2Icon"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"/></svg></div>
+  <h3 id="modal2Title">Confirm</h3>
+  <p class="msub" id="modal2Sub"></p>
+  <textarea class="inp" id="modal2Reason" hidden rows="3" style="margin-top:14px" aria-label="Reason"></textarea>
+  <div class="row2">
+    <button class="btn btn-s" id="modal2Cancel" type="button">Cancel</button>
+    <button class="btn btn-p" id="modal2Confirm" type="button">Confirm</button>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/ui/shell.js' %}"></script>{% block page_scripts %}{% endblock %}{% endblock %}

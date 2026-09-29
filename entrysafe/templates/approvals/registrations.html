@@ -1,0 +1,32 @@
+{% extends "shell.html" %}
+{% block title %}Registrations — EntrySafe{% endblock %}
+{% block page_title %}Registrations{% endblock %}
+{% block page_sub %}Approve a resident before they can sign in.{% endblock %}
+{% block content %}
+<div class="tablist2">
+  <a class="tab2" href="?status=pending" {% if status == 'pending' %}aria-current="true"{% endif %}>Pending<span class="n">{{ counts.pending }}</span></a>
+  <a class="tab2" href="?status=approved" {% if status == 'approved' %}aria-current="true"{% endif %}>Approved<span class="n">{{ counts.approved }}</span></a>
+  <a class="tab2" href="?status=disapproved" {% if status == 'disapproved' %}aria-current="true"{% endif %}>Disapproved<span class="n">{{ counts.disapproved }}</span></a>
+</div>
+
+<div class="section">
+  {% for r in items %}
+  <div class="list-row tall">
+    <div class="ico"><svg><use href="#i-user"/></svg></div>
+    <div class="main2">
+      <b>{{ r.full_name|default:r.user.username }} <span class="mono" style="font-weight:500;color:var(--mute);font-size:12px">{{ r.reference }}</span></b>
+      <span>{{ r.user.email }}{% if r.contact_number %} &middot; {{ r.contact_number }}{% endif %}</span>
+      <div class="meta-grid"><span>{{ r.unit_number }}</span><span>Submitted {{ r.created_at|date:"M d, Y" }}</span>
+        {% if r.disapproval_reason %}<span>Reason: {{ r.disapproval_reason }}</span>{% endif %}{% if r.reviewed_at %}<span>Reviewed {{ r.reviewed_at|date:"M d, Y" }}{% if r.reviewed_by %} by {{ r.reviewed_by.get_username }}{% endif %}</span>{% endif %}</div>
+    </div>
+    <div class="actions">
+      {% if r.id_proof_image %}<a class="btn btn-s btn-sm" href="{% url 'approvals:proof' r.pk %}" target="_blank" rel="noopener"><svg><use href="#i-doc"/></svg>Document</a>{% endif %}
+      {% if r.is_pending %}
+        <form class="inline-form" method="post" action="{% url 'approvals:disapprove' r.pk %}" data-confirm-title="Disapprove this registration?" data-confirm-sub="{{ r.full_name|default:r.user.username }} will not be able to sign in." data-confirm-action="Disapprove" data-confirm-reason="Reason (optional, shown to the resident)" data-confirm-warn>{% csrf_token %}<input type="hidden" name="reason"><button class="btn btn-danger btn-sm" type="submit">Disapprove</button></form>
+        <form class="inline-form" method="post" action="{% url 'approvals:approve' r.pk %}" data-confirm-title="Approve this registration?" data-confirm-sub="{{ r.full_name|default:r.user.username }} will get an account and can sign in right away." data-confirm-action="Approve">{% csrf_token %}<button class="btn btn-p btn-sm" type="submit">Approve</button></form>
+      {% else %}<span class="pill {% if r.approval_status == 'APPROVED' %}green{% else %}red{% endif %}">{{ r.get_approval_status_display }}</span>{% endif %}
+    </div>
+  </div>
+  {% empty %}<div class="empty">No {{ status }} registrations.</div>{% endfor %}
+</div>
+{% endblock %}

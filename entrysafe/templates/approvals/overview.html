@@ -1,0 +1,36 @@
+{% extends "shell.html" %}
+{% block title %}Overview — EntrySafe{% endblock %}
+{% block page_title %}Overview{% endblock %}
+{% block page_sub %}A quick look at what needs your attention.{% endblock %}
+{% block content %}
+<div class="banner">
+  <div class="bico"><svg><use href="#i-check2"/></svg></div>
+  <div class="btxt"><b>{% if pending_count %}{{ pending_count }} registration{{ pending_count|pluralize }} need{{ pending_count|pluralize:"s," }} your review{% else %}Nothing waiting for review{% endif %}</b><span>Residents can only sign in after you approve their registration.</span></div>
+  <div class="bact"><button class="btn btn-s btn-sm" type="button" data-bn="dismiss">Dismiss</button><a class="btn btn-p btn-sm" href="{% url 'approvals:registrations' %}">Review registrations</a></div>
+</div>
+
+<div class="grid-cards">
+  <div class="stat"><b class="mono">{{ pending_count }}</b><span>Pending registrations</span></div>
+  <div class="stat"><b class="mono">{{ approved_count }}</b><span>Approved residents</span></div>
+  <div class="stat"><b class="mono">{{ rejected_count }}</b><span>Disapproved</span></div>
+</div>
+<hr class="dots">
+
+<div class="section">
+  <div class="section-h"><div><h2>Waiting longest</h2><p>Oldest registrations still pending.</p></div><a class="linkbtn" href="{% url 'approvals:registrations' %}">See all</a></div>
+  {% for r in latest_pending %}
+    <div class="list-row"><div class="ico"><svg><use href="#i-user"/></svg></div>
+      <div class="main2"><b>{{ r.full_name|default:r.user.username }}</b><span>{{ r.unit_number }} &middot; {{ r.created_at|date:"M d, Y" }}</span></div>
+      <div class="actions"><span class="pill">Pending</span></div></div>
+  {% empty %}<div class="empty">No pending registrations.</div>{% endfor %}
+</div>
+
+<div class="section">
+  <div class="section-h"><div><h2>Recent decisions</h2><p>The last registrations you approved or disapproved.</p></div></div>
+  {% for r in recent %}
+    <div class="list-row"><div class="ico"><svg><use href="#i-list"/></svg></div>
+      <div class="main2"><b>{{ r.full_name|default:r.user.username }} &middot; {{ r.get_approval_status_display }}</b><span>{{ r.reviewed_by.get_username|default:"—" }} &middot; {{ r.reviewed_at|date:"M d, Y" }}</span></div>
+      <div class="actions"><span class="pill {% if r.approval_status == 'APPROVED' %}green{% else %}red{% endif %}">{{ r.get_approval_status_display }}</span></div></div>
+  {% empty %}<div class="empty">No decisions yet.</div>{% endfor %}
+</div>
+{% endblock %}

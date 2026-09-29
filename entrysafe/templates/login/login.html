@@ -1,164 +1,47 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "auth/auth_base.html" %}
+{% block title %}Sign in — EntrySafe{% endblock %}
+{% block card %}
+<div class="card auto">
+  <div class="pad">
+    <div class="appicon"><svg><use href="#i-mark"/></svg></div>
+    <h1 class="title">Welcome back</h1>
+    <p class="lede">Sign in to manage access for your condominium.</p>
 
-{% block title %}EntrySafe — Authentication & Access Portal{% endblock %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/login/login.css' %}">
-{% endblock %}
-
-{% block body_class %}clay-canvas min-h-screen w-full flex items-center justify-center text-on-surface font-body-md antialiased relative overflow-x-hidden p-4 md:p-8{% endblock %}
-
-{% block content %}
-<!-- Ambient Background Atmosphere Spheres -->
-<div class="absolute -top-20 -left-20 w-96 h-96 rounded-full pointer-events-none opacity-40 blur-3xl bg-gradient-to-br from-white to-emerald-100"></div>
-<div class="absolute top-1/2 -right-28 w-[420px] h-[420px] rounded-full pointer-events-none opacity-45 blur-3xl bg-gradient-to-tl from-emerald-200/40 to-white"></div>
-<div class="absolute -bottom-24 left-1/3 w-80 h-80 rounded-full pointer-events-none opacity-30 blur-2xl bg-emerald-100"></div>
-
-<main class="w-full max-w-[530px] z-10 my-auto py-4">
-  <div class="clay-container rounded-[28px] p-7 md:p-9 flex flex-col gap-6 shadow-2xl">
-    
-    <!-- Top Header & Branding -->
-    <div class="flex flex-col items-center text-center">
-      <div class="w-13 h-13 p-3 rounded-2xl clay-crest-icon flex items-center justify-center text-white mb-3 shadow-md">
-        <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">shield</span>
-      </div>
-      <h1 class="font-headline-lg text-2xl md:text-[28px] text-on-surface tracking-tight font-bold">EntrySafe</h1>
-      <p class="font-body-md text-sm md:text-base text-on-surface-variant max-w-[360px] mt-1">
-        Condominium Access &amp; Security Management
-      </p>
-    </div>
-
-    <!-- Error Message Alert -->
-    {% if error %}
-    <div class="p-3.5 rounded-2xl bg-red-50 text-red-800 text-sm font-medium flex items-center gap-2.5 border border-red-200/80 shadow-sm animate-fadeIn">
-      <span class="material-symbols-outlined text-red-600 text-lg flex-shrink-0">error</span>
-      <span>{{ error }}</span>
-    </div>
-    {% endif %}
-
-    <!-- Login Form -->
-    <form class="flex flex-col gap-5" action="{% url 'login:login' %}" method="post">
+    <form method="post" action="{% url 'login:login' %}" style="margin-top:24px">
       {% csrf_token %}
-
-      <!-- Access Role Selector -->
-      <div class="flex flex-col gap-2">
-        <label class="font-label-md text-xs md:text-sm text-on-surface font-semibold ml-1 flex items-center justify-between">
-          <span>Access Role</span>
-        </label>
-        <div class="clay-segmented-track rounded-2xl p-1.5 grid grid-cols-3 gap-1.5" role="tablist">
-          <button type="button" class="clay-role-pill clay-role-pill-active flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-center font-label-md text-xs md:text-sm font-semibold">
-            <span class="material-symbols-outlined text-base">home_pin</span>
-            <span>Resident</span>
-          </button>
-          <button type="button" class="clay-role-pill flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-center font-label-md text-xs md:text-sm text-on-surface-variant font-medium">
-            <span class="material-symbols-outlined text-base">security</span>
-            <span>Security</span>
-          </button>
-          <button type="button" class="clay-role-pill flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-center font-label-md text-xs md:text-sm text-on-surface-variant font-medium">
-            <span class="material-symbols-outlined text-base">admin_panel_settings</span>
-            <span>Admin</span>
-          </button>
+      {% if error %}<div class="alert" role="alert" style="margin-top:0;margin-bottom:16px"><svg><use href="#i-alert"/></svg><span>{{ error }}</span></div>{% endif %}
+      <div class="field" style="margin-top:0">
+        <label for="li-user">Username or email</label>
+        <input class="inp" id="li-user" name="username" value="{{ username|default:'' }}" placeholder="name@example.com" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="li-pass">Password</label>
+        <div class="inp-wrap">
+          <input class="inp" id="li-pass" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" style="padding-right:44px" required>
+          <button type="button" class="eye" data-toggle="li-pass" aria-label="Show password"><svg><use href="#i-eye"/></svg></button>
         </div>
       </div>
-
-      <!-- Email or Username Field -->
-      <div class="flex flex-col gap-2">
-        <label class="font-label-md text-xs md:text-sm text-on-surface font-semibold ml-1" for="username">
-          Email or Username
-        </label>
-        <div class="clay-recessed-field rounded-2xl flex items-center px-4 py-3.5 gap-3">
-          <span class="material-symbols-outlined text-outline-variant text-xl">mail</span>
-          <input 
-            autocomplete="username" 
-            class="w-full bg-transparent border-none p-0 text-on-surface placeholder:text-outline-variant text-sm md:text-base focus:ring-0 focus:outline-none" 
-            id="username" 
-            name="username" 
-            placeholder="resident@tower.entrysafe.com" 
-            type="text"
-            required>
-        </div>
-      </div>
-
-      <!-- Password Field -->
-      <div class="flex flex-col gap-2">
-        <div class="flex justify-between items-center ml-1">
-          <label class="font-label-md text-xs md:text-sm text-on-surface font-semibold" for="password">
-            Password
-          </label>
-        </div>
-        <div class="clay-recessed-field rounded-2xl flex items-center px-4 py-3.5 gap-3 relative">
-          <span class="material-symbols-outlined text-outline-variant text-xl">lock</span>
-          <input 
-            autocomplete="current-password" 
-            class="w-full bg-transparent border-none p-0 text-on-surface placeholder:text-outline-variant text-sm md:text-base focus:ring-0 focus:outline-none tracking-wider" 
-            id="password" 
-            name="password" 
-            placeholder="••••••••••••" 
-            type="password"
-            required>
-          <button aria-label="Toggle password visibility" class="text-outline hover:text-on-surface transition-colors flex items-center justify-center p-1 rounded-lg focus:outline-none cursor-pointer" id="togglePassword" type="button">
-            <span class="material-symbols-outlined text-xl" id="toggleIcon">visibility</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Remember Me & Forgot Password -->
-      <div class="flex items-center justify-between pt-0.5 px-1">
-        <label class="flex items-center gap-2.5 cursor-pointer select-none">
-          <input class="clay-checkbox w-4 h-4 rounded-md" id="rememberMe" type="checkbox">
-          <span class="font-label-md text-xs md:text-sm text-on-surface-variant font-medium">Remember Me</span>
-        </label>
-        <a class="font-label-md text-xs md:text-sm text-primary hover:underline font-semibold" href="#recovery">
-          Forgot password?
-        </a>
-      </div>
-
-      <!-- Submit CTA Button -->
-      <button class="clay-btn-primary w-full py-4 px-6 rounded-2xl text-on-primary font-label-lg text-sm md:text-base font-bold flex items-center justify-center gap-2 mt-1 cursor-pointer group shadow-lg" type="submit">
-        <span>Sign In to Terminal</span>
-        <span class="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1">arrow_forward</span>
-      </button>
+      <button class="btn btn-p" type="submit" style="margin-top:22px">Sign In</button>
     </form>
 
-    <!-- Subcard Footer: Link to Register -->
-    <div class="clay-subcard rounded-2xl p-4 md:p-5 flex items-center justify-between gap-3">
-      <div class="flex flex-col">
-        <span class="font-label-md text-xs md:text-sm text-on-surface font-semibold">New to the Condominium?</span>
-        <span class="font-body-sm text-xs text-on-surface-variant">Request digital gate pass access</span>
-      </div>
-      <a href="{% url 'register:register' %}" class="clay-btn-secondary px-4 py-2.5 rounded-xl text-on-surface font-label-md text-xs md:text-sm shrink-0 inline-flex items-center justify-center font-bold hover:text-primary transition-all">
-        Register
-      </a>
-    </div>
-
+    <div class="foot">Don't have an account? <a href="{% url 'register:register' %}">Request Access</a></div>
   </div>
-</main>
+</div>
 {% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/login/login.js' %}"></script>
-<script>
-  const passwordInput = document.getElementById('password');
-  const toggleButton = document.getElementById('togglePassword');
-  const toggleIcon = document.getElementById('toggleIcon');
-
-  if (toggleButton && passwordInput && toggleIcon) {
-    toggleButton.addEventListener('click', () => {
-      const isPassword = passwordInput.type === 'password';
-      passwordInput.type = isPassword ? 'text' : 'password';
-      toggleIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
-    });
-  }
-
-  const roleButtons = document.querySelectorAll('.clay-role-pill');
-  roleButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      roleButtons.forEach(b => {
-        b.className = 'clay-role-pill flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-center font-label-md text-xs md:text-sm text-on-surface-variant font-medium';
-      });
-      btn.className = 'clay-role-pill clay-role-pill-active flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-center font-label-md text-xs md:text-sm font-semibold';
-    });
-  });
-</script>
+{% block after_stage %}
+{% if submitted %}
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="okwrap"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"/></svg></div>
+  <h3 id="modalTitle">Registration Submitted for Review</h3>
+  <p class="msub">Your residency application has been sent to the building administrator. You can sign in once it is approved.</p>
+  <div class="kv">
+    <div class="row"><span>Reference code</span><span class="mono">{{ submitted.reference }}</span></div>
+    <div class="row"><span>Requested unit</span><span>{{ submitted.unit }}</span></div>
+    <div class="row"><span>Submitted</span><span>{{ submitted.date }}</span></div>
+    <div class="row"><span>Status</span><span class="pill">Pending Admin Approval</span></div>
+  </div>
+  <button class="btn btn-p" id="modalDone" type="button" style="margin-top:22px">Done, Return to Sign In</button>
+</div>
+{% endif %}
 {% endblock %}

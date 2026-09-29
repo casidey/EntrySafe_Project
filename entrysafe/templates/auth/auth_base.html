@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body %}
+<div class="stage">
+  <div class="field-bg" aria-hidden="true"></div>
+  <button type="button" class="rail-btn theme-fab" id="themeFab" aria-label="Toggle dark mode" title="Toggle dark mode">
+    <svg class="i-moon"><use href="#i-moon"/></svg><svg class="i-sun"><use href="#i-sun"/></svg>
+  </button>
+  <div class="frame">
+    <div class="wordmark"><svg><use href="#i-mark"/></svg><span>EntrySafe</span></div>
+    {% block card %}{% endblock %}
+  </div>
+</div>
+{% block after_stage %}{% endblock %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/ui/auth.js' %}"></script>{% endblock %}
