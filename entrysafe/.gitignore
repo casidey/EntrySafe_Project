@@ -20,3 +20,11 @@ db.sqlite3
 
 # Django environment variables / secret keys
 .env
+
+# Uploaded files: residents' ID documents and restriction photos (private)
+media/
+
+# Session evidence files (kept outside the repo history)
+BASELINE_COMMIT.txt
+GIT_*.txt
+GIT_*.patch
