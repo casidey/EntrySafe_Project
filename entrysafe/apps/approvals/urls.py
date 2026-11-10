@@ -10,4 +10,5 @@ urlpatterns = [
     path("registrations/<int:pk>/approve/", views.approve_view, name="approve"),
     path("registrations/<int:pk>/disapprove/", views.disapprove_view, name="disapprove"),
     path("registrations/<int:pk>/proof/", views.proof_view, name="proof"),
+    path("accounts/", views.accounts_view, name="accounts"),
 ]

@@ -1,12 +1,21 @@
 import mimetypes
+import re
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import transaction
+from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.audit.models import AuditLog
 from apps.profile.models import ReviewError, UserProfile
 from apps.restrictions import services as restriction_services
 
@@ -89,3 +98,68 @@ def proof_view(request, pk):
         raise Http404("Document is missing from storage.")
     ctype = mimetypes.guess_type(profile.id_proof_image.name)[0] or "application/octet-stream"
     return FileResponse(fh, content_type=ctype)
+
+
+# ---------------------------------------------------------------- staff accounts (guards and admins)
+STAFF_ROLES = {"GUARD": "Guard", "ADMIN": "Administrator"}
+
+
+def _staff_accounts():
+    return (User.objects.filter(Q(is_staff=True) | Q(profile__role=UserProfile.Role.GUARD))
+            .select_related("profile").order_by("-date_joined"))
+
+
+def create_staff_account(admin, data, request=None):
+    """Create an active guard or admin account. Returns (user, form, error).
+    There is no public sign-up for these roles: only an administrator can make them."""
+    form = {k: data.get(k, "").strip() for k in ("full_name", "username", "email", "contact_number", "role")}
+    password = data.get("password", "")
+    if form["role"] not in STAFF_ROLES:
+        return None, form, "Please choose Guard or Administrator."
+    if not form["full_name"] or not form["username"] or not password:
+        return None, form, "Please enter a full name, username and password."
+    if len(form["username"]) > 150 or not re.fullmatch(r"[\w.@+-]+", form["username"]):
+        return None, form, "Usernames may contain only letters, numbers and @ . + - _"
+    if form["email"]:
+        try:
+            validate_email(form["email"])
+        except ValidationError:
+            return None, form, "Please enter a valid email address."
+    if User.objects.filter(username__iexact=form["username"]).exists() or (
+            form["email"] and User.objects.filter(email__iexact=form["email"]).exists()):
+        return None, form, "An account with this username or email already exists."
+    try:
+        validate_password(password, User(username=form["username"], email=form["email"], first_name=form["full_name"]))
+    except ValidationError as exc:
+        return None, form, " ".join(exc.messages)
+
+    is_admin = form["role"] == "ADMIN"
+    with transaction.atomic():
+        user = User.objects.create_user(form["username"], email=form["email"], password=password,
+                                        first_name=form["full_name"], is_staff=is_admin, is_active=True)
+        UserProfile.objects.create(
+            user=user, role=UserProfile.Role.ADMIN if is_admin else UserProfile.Role.GUARD,
+            full_name=form["full_name"], contact_number=form["contact_number"],
+            approval_status=UserProfile.ApprovalStatus.APPROVED, reviewed_by=admin, reviewed_at=timezone.now())
+        AuditLog.record(admin, AuditLog.Action.CREATE_ACCOUNT, "UserProfile", user.profile.pk,
+                        f"Created {STAFF_ROLES[form['role']].lower()} account {user.username}.", request)
+    return user, form, None
+
+
+@_guard
+def accounts_view(request):
+    ctx = {"roles": STAFF_ROLES, "form": {"role": "GUARD"}}
+    if request.method == "POST":
+        user, form, error = create_staff_account(request.user, request.POST, request=request)
+        if user is not None:
+            messages.success(request, f"{STAFF_ROLES[form['role']]} account {user.username} was created. They can sign in now.")
+            return redirect("approvals:accounts")
+        ctx.update(form=form, error=error)
+    rows = []
+    for u in _staff_accounts():
+        p = getattr(u, "profile", None)
+        rows.append({"user": u, "name": (p.full_name if p and p.full_name else u.get_full_name()) or u.username,
+                     "role": "Administrator" if u.is_staff else "Guard",
+                     "contact": p.contact_number if p else ""})
+    ctx["accounts"] = rows
+    return render(request, "approvals/accounts.html", ctx)

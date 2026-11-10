@@ -21,6 +21,7 @@ def _nav(user):
             ("approvals:registrations", "Registrations", "check2", "approvals", "registrations"),
             ("restrictions:queue", "Requests", "list", "restrictions", "queue"),
             ("restrictions:restricted", "Restricted list", "shield", "restrictions", "restricted"),
+            ("approvals:accounts", "Accounts", "user", "approvals", "accounts"),
         ]
     elif _role(user) == "GUARD":
         items = [("guard:search", "Gate check", "search", "guard", None)]

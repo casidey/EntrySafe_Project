@@ -1,0 +1,39 @@
+{% extends "shell.html" %}
+{% block title %}Accounts — EntrySafe{% endblock %}
+{% block page_title %}Accounts{% endblock %}
+{% block page_sub %}Create guard and administrator accounts. These roles cannot sign up on their own.{% endblock %}
+{% block content %}
+<form method="post" action="{% url 'approvals:accounts' %}" novalidate autocomplete="off">
+  {% csrf_token %}
+  <div class="section">
+    <div class="section-h"><div><h2>New account</h2><p>The account is active right away; share the password with the person directly.</p></div></div>
+    {% if error %}<div class="alert" role="alert" style="margin:0 0 14px"><svg><use href="#i-alert"/></svg><span>{{ error }}</span></div>{% endif %}
+    <div class="setrow"><div class="lab"><b>Role</b><span>Guards use Gate check. Administrators manage everything.</span></div>
+      <div class="val"><select class="inp" name="role" aria-label="Role" style="max-width:420px">
+        {% for value, text in roles.items %}<option value="{{ value }}"{% if form.role == value %} selected{% endif %}>{{ text }}</option>{% endfor %}
+      </select></div></div>
+    <div class="setrow"><div class="lab"><b>Full name</b><span>Shown in the app and on gate logs.</span></div>
+      <div class="val"><input class="inp" name="full_name" value="{{ form.full_name|default:'' }}" aria-label="Full name" maxlength="150" required style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Username</b><span>Used to sign in. Letters, numbers and @ . + - _ only.</span></div>
+      <div class="val"><input class="inp" name="username" value="{{ form.username|default:'' }}" aria-label="Username" maxlength="150" required style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Email</b><span>Optional. Can also be used to sign in.</span></div>
+      <div class="val"><input class="inp" type="email" name="email" value="{{ form.email|default:'' }}" aria-label="Email" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Contact number</b><span>Optional.</span></div>
+      <div class="val"><input class="inp" name="contact_number" value="{{ form.contact_number|default:'' }}" aria-label="Contact number" maxlength="40" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Password</b><span>At least 8 characters; avoid common or all-number passwords.</span></div>
+      <div class="val"><input class="inp" type="password" name="password" aria-label="Password" autocomplete="new-password" required style="max-width:420px"></div></div>
+  </div>
+  <div class="actions-bar" style="max-width:700px"><button class="btn btn-p btn-sm" type="submit">Create account</button></div>
+</form>
+
+<div class="section" style="margin-top:28px">
+  <div class="section-h"><div><h2>Guards and administrators</h2><p>Everyone who can use the gate or admin screens.</p></div></div>
+  {% for a in accounts %}
+  <div class="list-row">
+    <div class="ico"><svg><use href="#i-{% if a.role == 'Guard' %}shield{% else %}user{% endif %}"/></svg></div>
+    <div class="main2"><b>{{ a.name }}</b><span>{{ a.user.username }}{% if a.user.email %} &middot; {{ a.user.email }}{% endif %}{% if a.contact %} &middot; {{ a.contact }}{% endif %} &middot; added {{ a.user.date_joined|date:"M d, Y" }}</span></div>
+    <div class="actions">{% if not a.user.is_active %}<span class="pill red">Inactive</span>{% endif %}<span class="pill {% if a.role == 'Guard' %}green{% endif %}">{{ a.role }}</span></div>
+  </div>
+  {% empty %}<div class="empty">No guard or administrator accounts yet.</div>{% endfor %}
+</div>
+{% endblock %}

@@ -67,3 +67,65 @@ class ApprovalsAccessTests(TestCase):
     def test_overview_renders(self):
         self.client.force_login(self.admin)
         self.assertContains(self.client.get(reverse("approvals:overview")), "Pending registrations")
+
+
+class StaffAccountTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user("boss", password="x", is_staff=True)
+        self.resident = User.objects.create_user("res", password="x")
+        self.url = reverse("approvals:accounts")
+        self.data = {"role": "GUARD", "full_name": "Gina Gate", "username": "gina", "email": "gina@example.com",
+                     "contact_number": "0917 000 0000", "password": "Gatehouse2026!"}
+
+    def test_only_admins_can_open_or_create(self):
+        self.assertIn(reverse("login:login"), self.client.get(self.url)["Location"])
+        self.client.force_login(self.resident)
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+        self.client.post(self.url, self.data)
+        self.assertFalse(User.objects.filter(username="gina").exists())
+
+    def test_admin_creates_guard_who_can_sign_in_to_gate_check(self):
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(self.url), "New account")
+        resp = self.client.post(self.url, self.data, follow=True)
+        self.assertContains(resp, "Guard account gina was created")
+        self.assertContains(resp, "Gina Gate")
+        guard = User.objects.get(username="gina")
+        self.assertTrue(guard.is_active)
+        self.assertFalse(guard.is_staff)
+        self.assertEqual((guard.profile.role, guard.profile.approval_status, guard.profile.reviewed_by),
+                         ("GUARD", "APPROVED", self.admin))
+        log = AuditLog.objects.get(action="CREATE_ACCOUNT")
+        self.assertEqual((log.user, log.target_entity, log.target_id), (self.admin, "UserProfile", guard.profile.pk))
+        self.client.logout()
+        self.client.post(reverse("login:login"), {"username": "gina", "password": "Gatehouse2026!"})
+        self.assertRedirects(self.client.get(reverse("home:home")), reverse("guard:search"))
+
+    def test_admin_creates_administrator(self):
+        self.client.force_login(self.admin)
+        self.client.post(self.url, {**self.data, "role": "ADMIN", "username": "ana", "email": "ana@example.com"})
+        ana = User.objects.get(username="ana")
+        self.assertTrue(ana.is_staff)
+        self.assertEqual(ana.profile.role, "ADMIN")
+
+    def test_validation(self):
+        User.objects.create_user("taken", email="taken@example.com", password="x")
+        self.client.force_login(self.admin)
+        cases = [
+            ({"role": "RESIDENT"}, "choose Guard or Administrator"),
+            ({"full_name": ""}, "full name, username and password"),
+            ({"username": "bad name"}, "Usernames may contain only"),
+            ({"email": "nope"}, "valid email"),
+            ({"username": "TAKEN"}, "already exists"),
+            ({"email": "taken@example.com"}, "already exists"),
+            ({"password": "12345678"}, "too common"),
+        ]
+        for change, message in cases:
+            resp = self.client.post(self.url, {**self.data, **change})
+            self.assertContains(resp, message)
+        self.assertFalse(User.objects.filter(username="gina").exists())
+        self.assertContains(self.client.post(self.url, {**self.data, "email": "nope"}), 'value="Gina Gate"')
+
+    def test_nav_shows_accounts_for_admin(self):
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse("approvals:overview")), self.url)
