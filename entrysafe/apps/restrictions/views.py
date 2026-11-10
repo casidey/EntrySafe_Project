@@ -164,8 +164,11 @@ def request_photo_view(request, kind, pk):
 @login_required(login_url="login:login")
 def restricted_photo_view(request, kind, pk):
     obj = get_object_or_404(RESTRICTED_MODELS[_kind(kind)].objects.select_related("request"), pk=pk)
+    from apps.guard.views import is_guard
+
     owner_id = obj.request.resident_id if obj.request_id else None
-    if not (request.user.is_staff or owner_id == request.user.pk):
+    guard_can_see = is_guard(request.user) and obj.status == RestrictionStatus.ACTIVE
+    if not (request.user.is_staff or owner_id == request.user.pk or guard_can_see):
         raise Http404("No photo on file.")
     return _serve(obj.photo)
 

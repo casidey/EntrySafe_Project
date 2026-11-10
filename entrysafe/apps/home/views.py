@@ -6,7 +6,11 @@ from django.shortcuts import redirect, render
 def home_view(request):
     if request.user.is_staff:
         return redirect("approvals:overview")
+    from apps.guard.views import is_guard
     from apps.restrictions import services
+
+    if is_guard(request.user):
+        return redirect("guard:search")
 
     profile = getattr(request.user, "profile", None)
     ctx = {"profile": profile, "can_request": services.is_resident(request.user)}

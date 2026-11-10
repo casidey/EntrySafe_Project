@@ -9,5 +9,6 @@ urlpatterns = [
     path("settings/", include("apps.user_settings.urls")),
     path("approvals/", include("apps.approvals.urls")),
     path("restrictions/", include("apps.restrictions.urls")),
+    path("guard/", include("apps.guard.urls")),
     path("", include("apps.home.urls")),
 ]

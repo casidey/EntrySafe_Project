@@ -1,0 +1,47 @@
+{% extends "shell.html" %}
+{% block title %}Gate check — EntrySafe{% endblock %}
+{% block page_title %}Gate check{% endblock %}
+{% block page_sub %}Search a name or plate number against the active restricted list.{% endblock %}
+{% block content %}
+<form method="get" action="{% url 'guard:search' %}" role="search">
+  <div class="search-wrap" style="display:flex;gap:10px;align-items:center">
+    <div style="position:relative;flex:1">
+      <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--mute);pointer-events:none"><use href="#i-search"/></svg>
+      <input class="inp" id="gateQuery" name="q" value="{{ query }}" placeholder="Name, alias or plate number, e.g. Villanueva or NBX 4471" aria-label="Name or plate number" autocomplete="off" autofocus style="padding-left:40px">
+    </div>
+    <button class="btn btn-p btn-sm" type="submit" style="width:auto">Check</button>
+    {% if query %}<a class="btn btn-s btn-sm" href="{% url 'guard:search' %}">Clear</a>{% endif %}
+  </div>
+</form>
+
+{% if too_short %}
+  <div class="alert" role="status"><svg><use href="#i-alert"/></svg><span>Type at least 2 characters to search.</span></div>
+{% elif searched and results %}
+  <div class="alert" role="alert" style="margin-bottom:18px"><svg><use href="#i-alert"/></svg><span><b>Restricted:</b> {{ results|length }} active restriction{{ results|length|pluralize }} match{{ results|length|pluralize:"es," }} &ldquo;{{ query }}&rdquo;. Do not allow entry; follow the instructions below.</span></div>
+{% elif searched %}
+  <div class="alert ok" role="status" style="margin-bottom:18px"><svg><use href="#i-check2"/></svg><span><b>Clear:</b> no active restriction matches &ldquo;{{ query }}&rdquo;.</span></div>
+{% endif %}
+
+<div class="section">
+  <div class="section-h"><div>
+    <h2>{% if searched %}Matches{% else %}Active restricted list{% endif %}</h2>
+    <p>{% if searched %}Check the photo and details before acting.{% else %}{{ active_total }} active restriction{{ active_total|pluralize }} across the property.{% endif %}</p>
+  </div></div>
+  {% for x in results %}
+  <div class="list-row tall">
+    {% if x.obj.photo %}<a href="{% url 'restrictions:restricted_photo' x.kind x.obj.pk %}" target="_blank" rel="noopener" style="flex:none"><img src="{% url 'restrictions:restricted_photo' x.kind x.obj.pk %}" alt="Photo of {{ x.title }}" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block"></a>
+    {% else %}<div class="ico"><svg><use href="#i-{{ x.icon }}"/></svg></div>{% endif %}
+    <div class="main2">
+      <b>{{ x.title }}</b>
+      <span>{{ x.type_label }}{% if x.detail %} &middot; {{ x.detail }}{% endif %}</span>
+      <div class="meta-grid">
+        <span>Since {{ x.obj.start_date|date:"M d, Y" }}</span><span>{% if x.obj.end_date %}Until {{ x.obj.end_date|date:"M d, Y" }}{% else %}Permanent{% endif %}</span>
+        <span>Reason: {{ x.obj.restriction_reason|truncatechars:120 }}</span>
+      </div>
+      {% if x.obj.guard_instructions %}<div style="margin-top:8px;font-size:13.5px"><b>Instructions:</b> {{ x.obj.guard_instructions }}</div>{% endif %}
+    </div>
+    <div class="actions"><span class="pill red">Restricted</span></div>
+  </div>
+  {% empty %}<div class="empty">{% if searched %}No matches.{% else %}No active restrictions.{% endif %}</div>{% endfor %}
+</div>
+{% endblock %}

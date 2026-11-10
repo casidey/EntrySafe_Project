@@ -10,6 +10,10 @@ _ALSO_CURRENT = {
 }
 
 
+def _role(user):
+    return getattr(getattr(user, "profile", None), "role", "RESIDENT")
+
+
 def _nav(user):
     if user.is_staff:
         items = [
@@ -18,11 +22,13 @@ def _nav(user):
             ("restrictions:queue", "Requests", "list", "restrictions", "queue"),
             ("restrictions:restricted", "Restricted list", "shield", "restrictions", "restricted"),
         ]
+    elif _role(user) == "GUARD":
+        items = [("guard:search", "Gate check", "search", "guard", None)]
     else:
-        items = [("home:home", "Home", "home", "home", None)]
-        # Guards do not file restriction requests.
-        if getattr(getattr(user, "profile", None), "role", "RESIDENT") != "GUARD":
-            items.append(("restrictions:mine", "Restrictions", "shield", "restrictions", None))
+        items = [
+            ("home:home", "Home", "home", "home", None),
+            ("restrictions:mine", "Restrictions", "shield", "restrictions", None),
+        ]
     items += [
         ("profile:profile", "Profile", "user", "profile", None),
         ("user_settings:settings", "Settings", "gear", "user_settings", None),
@@ -50,8 +56,8 @@ def shell(request):
     return {
         "theme": "dark" if settings_obj and settings_obj.dark_mode else "light",
         "shell_nav": nav,
-        "shell_panel_title": "Administration" if user.is_staff else "My Unit",
+        "shell_panel_title": "Administration" if user.is_staff else ("Gate" if _role(user) == "GUARD" else "My Unit"),
         "shell_display_name": user.get_full_name() or user.get_username(),
-        "shell_role_label": "Administrator" if user.is_staff else "Resident",
+        "shell_role_label": "Administrator" if user.is_staff else ("Guard" if _role(user) == "GUARD" else "Resident"),
         "shell_unit": getattr(getattr(user, "profile", None), "unit_label", ""),
     }

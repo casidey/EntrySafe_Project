@@ -189,7 +189,7 @@ class AccessTests(FlowBase):
         self.client.force_login(self.resident)
         self.assertContains(self.client.get(reverse("home:home")), reverse("restrictions:mine"))
         self.client.force_login(self.guard)
-        self.assertNotContains(self.client.get(reverse("home:home")), reverse("restrictions:mine"))
+        self.assertNotContains(self.client.get(reverse("home:home"), follow=True), reverse("restrictions:mine"))
         self.client.force_login(self.admin)
         page = self.client.get(reverse("approvals:overview"))
         self.assertContains(page, reverse("restrictions:queue"))
