@@ -1,0 +1,60 @@
+{% extends "shell.html" %}
+{% load static %}
+{% block title %}Restrict a {{ kind }} — EntrySafe{% endblock %}
+{% block page_title %}Restrict a {{ kind }}{% endblock %}
+{% block page_sub %}The administrator reviews every request before it reaches the gate.{% endblock %}
+{% block content %}
+<form id="restrictionForm" method="post" action="{% url 'restrictions:new' kind %}" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  {% if error %}<div class="alert" role="alert" style="margin-bottom:18px"><svg><use href="#i-alert"/></svg><span>{{ error }}</span></div>{% endif %}
+  <div class="section">
+    {% if kind == 'person' %}
+    <div class="setrow" style="padding-top:0;border-top:none"><div class="lab"><b>Name</b><span>The person's first and last name.</span></div>
+      <div class="val"><div class="grid2" style="max-width:420px">
+        <input class="inp" name="first_name" value="{{ form.first_name|default:'' }}" placeholder="First name" aria-label="First name" maxlength="80" required>
+        <input class="inp" name="last_name" value="{{ form.last_name|default:'' }}" placeholder="Last name" aria-label="Last name" maxlength="80" required>
+      </div></div></div>
+    <div class="setrow"><div class="lab"><b>Alias or nickname</b><span>Optional. Any other name they go by.</span></div>
+      <div class="val"><input class="inp" name="alias_nickname" value="{{ form.alias_nickname|default:'' }}" aria-label="Alias or nickname" maxlength="80" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Relationship to you</b><span>Optional. For example ex-tenant, contractor or visitor.</span></div>
+      <div class="val"><input class="inp" name="relationship_to_resident" value="{{ form.relationship_to_resident|default:'' }}" aria-label="Relationship to you" maxlength="80" style="max-width:420px"></div></div>
+    {% else %}
+    <div class="setrow" style="padding-top:0;border-top:none"><div class="lab"><b>Plate number</b><span>As shown on the vehicle.</span></div>
+      <div class="val"><input class="inp mono" name="license_plate" value="{{ form.license_plate|default:'' }}" placeholder="NBX 4471" aria-label="Plate number" maxlength="20" required style="max-width:420px;text-transform:uppercase"></div></div>
+    <div class="setrow"><div class="lab"><b>Vehicle type</b><span>The closest match.</span></div>
+      <div class="val"><select class="inp" name="vehicle_type" aria-label="Vehicle type" required style="max-width:420px">
+        <option value="">Choose a type</option>
+        {% for value, text in vehicle_types %}<option value="{{ value }}"{% if form.vehicle_type == value %} selected{% endif %}>{{ text }}</option>{% endfor %}
+      </select></div></div>
+    <div class="setrow"><div class="lab"><b>Make and model</b><span>Optional. For example Toyota Vios.</span></div>
+      <div class="val"><input class="inp" name="make_model" value="{{ form.make_model|default:'' }}" aria-label="Make and model" maxlength="100" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Color</b><span>Optional.</span></div>
+      <div class="val"><input class="inp" name="color" value="{{ form.color|default:'' }}" aria-label="Color" maxlength="40" style="max-width:420px"></div></div>
+    {% endif %}
+    <div class="setrow"><div class="lab"><b>Reason</b><span>What happened, and why access should be restricted.</span></div>
+      <div class="val"><textarea class="inp" name="reason" rows="4" aria-label="Reason" required style="max-width:420px">{{ form.reason|default:'' }}</textarea></div></div>
+    <div class="setrow"><div class="lab"><b>Photo</b><span>Optional. Helps the guards recognise the {{ kind }}.</span></div>
+      <div class="val"><div style="max-width:420px">
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload a photo" style="margin-top:0">
+          <svg><use href="#i-upload"/></svg>
+          <p>Tap to upload, or drag and drop a photo</p>
+          <p class="hint2">PNG or JPG, up to 5MB</p>
+        </div>
+        <input type="file" id="fileInput" name="photo" hidden accept=".png,.jpg,.jpeg">
+        <div class="filechip" id="fileChip" style="margin-top:0"><svg><use href="#i-doc"/></svg><span id="fileName"></span><button type="button" id="fileRemove" aria-label="Remove photo">&times;</button></div>
+      </div></div></div>
+  </div>
+
+  <input type="checkbox" name="consent" id="consentInput" hidden>
+  <div class="consent" id="consent" role="checkbox" aria-checked="false" tabindex="0" style="max-width:700px">
+    <span class="cbx"><svg viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <p>I confirm I have the right to submit this {% if kind == 'person' %}person's photo and information{% else %}vehicle's photo and information{% endif %} for security purposes, and that the details are accurate.</p>
+  </div>
+
+  <div class="actions-bar" style="max-width:700px;margin-top:20px">
+    <a class="btn btn-s btn-sm" href="{% url 'restrictions:mine' %}">Back</a>
+    <button class="btn btn-p btn-sm" id="submitRequest" type="submit">Submit for review</button>
+  </div>
+</form>
+{% endblock %}
+{% block page_scripts %}<script src="{% static 'js/ui/restrictions.js' %}"></script>{% endblock %}

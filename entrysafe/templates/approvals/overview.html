@@ -13,6 +13,8 @@
   <div class="stat"><b class="mono">{{ pending_count }}</b><span>Pending registrations</span></div>
   <div class="stat"><b class="mono">{{ approved_count }}</b><span>Approved residents</span></div>
   <div class="stat"><b class="mono">{{ rejected_count }}</b><span>Disapproved</span></div>
+  <a class="stat" href="{% url 'restrictions:queue' %}"><b class="mono">{{ pending_requests_count }}</b><span>Pending restriction requests</span></a>
+  <a class="stat" href="{% url 'restrictions:restricted' %}"><b class="mono">{{ active_restrictions_count }}</b><span>Active restrictions</span></a>
 </div>
 <hr class="dots">
 

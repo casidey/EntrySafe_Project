@@ -1,0 +1,53 @@
+{% extends "shell.html" %}
+{% block title %}Restrictions — EntrySafe{% endblock %}
+{% block page_title %}Restrictions{% endblock %}
+{% block page_sub %}Ask to keep a person or vehicle out of the property, and track your requests.{% endblock %}
+{% block content %}
+<div class="banner">
+  <div class="bico"><svg><use href="#i-shield"/></svg></div>
+  <div class="btxt"><b>Request a new restriction</b><span>The administrator reviews each request. Approved restrictions apply to the whole property.</span></div>
+  <div class="bact">
+    <a class="btn btn-s btn-sm" href="{% url 'restrictions:new' 'vehicle' %}"><svg><use href="#i-plus"/></svg>Vehicle</a>
+    <a class="btn btn-p btn-sm" href="{% url 'restrictions:new' 'person' %}"><svg><use href="#i-plus"/></svg>Person</a>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-h"><div><h2>Active restrictions</h2><p>In force at the gate now. You can remove one at any time.</p></div></div>
+  {% for x in restrictions %}
+  <div class="list-row tall">
+    <div class="ico"><svg><use href="#i-{{ x.icon }}"/></svg></div>
+    <div class="main2">
+      <b>{{ x.title }}</b>
+      <span>{{ x.type_label }}{% if x.detail %} &middot; {{ x.detail }}{% endif %}</span>
+      <div class="meta-grid"><span>Since {{ x.obj.start_date|date:"M d, Y" }}</span><span>{% if x.obj.end_date %}Until {{ x.obj.end_date|date:"M d, Y" }}{% else %}Permanent{% endif %}</span></div>
+    </div>
+    <div class="actions">
+      <form class="inline-form" method="post" action="{% url 'restrictions:remove' x.kind x.obj.pk %}" data-confirm-title="Remove this restriction?" data-confirm-sub="{{ x.title }} will no longer be flagged at the gate." data-confirm-action="Remove" data-confirm-warn>{% csrf_token %}<button class="btn btn-danger btn-sm" type="submit">Remove</button></form>
+    </div>
+  </div>
+  {% empty %}<div class="empty">No active restrictions.</div>{% endfor %}
+</div>
+
+<div class="section">
+  <div class="section-h"><div><h2>My requests</h2><p>Everything you have submitted, newest first.</p></div></div>
+  {% for x in requests %}
+  <div class="list-row tall">
+    <div class="ico"><svg><use href="#i-{{ x.icon }}"/></svg></div>
+    <div class="main2">
+      <b>{{ x.title }} <span class="mono" style="font-weight:500;color:var(--mute);font-size:12px">{{ x.ref }}</span></b>
+      <span>{{ x.type_label }}{% if x.detail %} &middot; {{ x.detail }}{% endif %}</span>
+      <div class="meta-grid"><span>Submitted {{ x.obj.created_at|date:"M d, Y" }}</span>
+        {% if x.obj.reviewed_at %}<span>Reviewed {{ x.obj.reviewed_at|date:"M d, Y" }}</span>{% endif %}
+        <span>Reason: {{ x.obj.reason|truncatechars:90 }}</span>
+        {% if x.obj.admin_remarks %}<span>Admin remarks: {{ x.obj.admin_remarks }}</span>{% endif %}</div>
+    </div>
+    <div class="actions">
+      {% if x.obj.photo %}<a class="btn btn-s btn-sm" href="{% url 'restrictions:request_photo' x.kind x.obj.pk %}" target="_blank" rel="noopener"><svg><use href="#i-doc"/></svg>Photo</a>{% endif %}
+      {% if x.is_pending %}<form class="inline-form" method="post" action="{% url 'restrictions:cancel' x.kind x.obj.pk %}" data-confirm-title="Cancel this request?" data-confirm-sub="The administrator will not review it." data-confirm-action="Cancel request" data-confirm-warn>{% csrf_token %}<button class="btn btn-danger btn-sm" type="submit">Cancel</button></form>{% endif %}
+      <span class="pill {{ x.pill }}">{{ x.obj.get_status_display }}</span>
+    </div>
+  </div>
+  {% empty %}<div class="empty">You have not submitted any requests yet.</div>{% endfor %}
+</div>
+{% endblock %}

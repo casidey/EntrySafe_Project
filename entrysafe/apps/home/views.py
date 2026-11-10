@@ -6,5 +6,11 @@ from django.shortcuts import redirect, render
 def home_view(request):
     if request.user.is_staff:
         return redirect("approvals:overview")
+    from apps.restrictions import services
+
     profile = getattr(request.user, "profile", None)
-    return render(request, "home/home.html", {"profile": profile})
+    ctx = {"profile": profile, "can_request": services.is_resident(request.user)}
+    if ctx["can_request"]:
+        ctx["pending_requests"] = services.pending_request_count(resident=request.user)
+        ctx["active_restrictions"] = services.active_restriction_count(resident=request.user)
+    return render(request, "home/home.html", ctx)

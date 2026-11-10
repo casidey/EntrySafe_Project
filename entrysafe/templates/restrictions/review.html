@@ -1,0 +1,53 @@
+{% extends "shell.html" %}
+{% block title %}{{ row.ref }} — EntrySafe{% endblock %}
+{% block page_title %}{{ row.title }}{% endblock %}
+{% block page_sub %}{{ row.type_label }} restriction request {{ row.ref }}{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="setrow" style="padding-top:0;border-top:none"><div class="lab"><b>Status</b><span>Where this request stands.</span></div>
+    <div class="val"><span class="pill {{ row.pill }}">{{ r.get_status_display }}</span>
+      {% if r.reviewed_at %}<div class="hint-block">Reviewed {{ r.reviewed_at|date:"M d, Y" }}{% if r.reviewed_by %} by {{ r.reviewed_by.get_username }}{% endif %}</div>{% endif %}
+      {% if r.admin_remarks %}<div class="hint-block">Remarks: {{ r.admin_remarks }}</div>{% endif %}
+      {% if restricted %}<div class="hint-block">Restriction: {{ restricted.get_status_display }}, since {{ restricted.start_date|date:"M d, Y" }}{% if restricted.end_date %} until {{ restricted.end_date|date:"M d, Y" }}{% else %}, permanent{% endif %}</div>{% endif %}
+    </div></div>
+  <div class="setrow"><div class="lab"><b>Requested by</b><span>The resident who filed it.</span></div>
+    <div class="val kvlist"><span><b>{{ row.resident_name }}</b></span>{% if row.resident_unit %}<span style="color:var(--mute)">{{ row.resident_unit }}</span>{% endif %}<span style="color:var(--mute)">Submitted {{ r.created_at|date:"M d, Y" }}</span></div></div>
+  {% if kind == 'person' %}
+  <div class="setrow"><div class="lab"><b>Person</b><span>Who the resident wants restricted.</span></div>
+    <div class="val kvlist"><span><b>{{ r.first_name }} {{ r.last_name }}</b></span>
+      {% if r.alias_nickname %}<span style="color:var(--mute)">Also known as {{ r.alias_nickname }}</span>{% endif %}
+      {% if r.relationship_to_resident %}<span style="color:var(--mute)">Relationship: {{ r.relationship_to_resident }}</span>{% endif %}</div></div>
+  {% else %}
+  <div class="setrow"><div class="lab"><b>Vehicle</b><span>What the resident wants restricted.</span></div>
+    <div class="val kvlist"><span><b class="mono">{{ r.license_plate }}</b></span>
+      <span style="color:var(--mute)">{{ r.get_vehicle_type_display }}{% if r.make_model %} &middot; {{ r.make_model }}{% endif %}{% if r.color %} &middot; {{ r.color }}{% endif %}</span></div></div>
+  {% endif %}
+  <div class="setrow"><div class="lab"><b>Reason</b><span>In the resident's words.</span></div>
+    <div class="val" style="white-space:pre-line">{{ r.reason }}</div></div>
+  <div class="setrow"><div class="lab"><b>Photo</b><span>Submitted with the request.</span></div>
+    <div class="val">{% if r.photo %}<a href="{% url 'restrictions:request_photo' kind r.pk %}" target="_blank" rel="noopener"><img src="{% url 'restrictions:request_photo' kind r.pk %}" alt="Photo submitted with the request" style="max-width:280px;width:100%;border-radius:12px;border:1px solid var(--line);display:block"></a>{% else %}<span style="color:var(--mute)">No photo was submitted.</span>{% endif %}</div></div>
+</div>
+
+{% if row.is_pending %}
+<form id="approveForm" method="post" action="{% url 'restrictions:approve' kind r.pk %}" data-confirm-title="Approve this restriction?" data-confirm-sub="{{ row.title }} will be added to the restricted list for the whole property." data-confirm-action="Approve">
+  {% csrf_token %}
+  <div class="section">
+    <div class="section-h"><div><h2>Decision</h2><p>Fill these in only if you approve. All three are optional.</p></div></div>
+    <div class="setrow"><div class="lab"><b>End date</b><span>Leave empty for a permanent restriction.</span></div>
+      <div class="val"><input class="inp" type="date" name="end_date" value="{{ form.end_date|default:'' }}" min="{{ today }}" aria-label="End date" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Guard instructions</b><span>What the guards should do at the gate.</span></div>
+      <div class="val"><textarea class="inp" name="guard_instructions" rows="3" aria-label="Guard instructions" style="max-width:420px">{{ form.guard_instructions|default:'' }}</textarea></div></div>
+    <div class="setrow"><div class="lab"><b>Remarks</b><span>Shown to the resident.</span></div>
+      <div class="val"><textarea class="inp" name="admin_remarks" rows="3" aria-label="Remarks" style="max-width:420px">{{ form.admin_remarks|default:'' }}</textarea></div></div>
+  </div>
+</form>
+<form id="rejectForm" method="post" action="{% url 'restrictions:reject' kind r.pk %}" data-confirm-title="Reject this request?" data-confirm-sub="{{ row.title }} will not be restricted." data-confirm-action="Reject" data-confirm-reason="Remarks (optional, shown to the resident)" data-confirm-warn>{% csrf_token %}<input type="hidden" name="reason"></form>
+<div class="actions-bar" style="max-width:700px">
+  <a class="btn btn-s btn-sm" href="{% url 'restrictions:queue' %}">Back</a>
+  <button class="btn btn-danger btn-sm" type="submit" form="rejectForm">Reject</button>
+  <button class="btn btn-p btn-sm" type="submit" form="approveForm">Approve</button>
+</div>
+{% else %}
+<div class="actions-bar" style="max-width:700px"><a class="btn btn-s btn-sm" href="{% url 'restrictions:queue' %}?status={{ r.status|lower }}">Back</a></div>
+{% endif %}
+{% endblock %}

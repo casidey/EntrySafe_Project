@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.profile.models import ReviewError, UserProfile
+from apps.restrictions import services as restriction_services
 
 # Administrators are Django staff users (created with `createsuperuser`).
 staff_required = user_passes_test(lambda u: u.is_active and u.is_staff, login_url="login:login")
@@ -32,6 +33,8 @@ def overview_view(request):
         "rejected_count": qs.filter(approval_status=S.DISAPPROVED).count(),
         "recent": qs.exclude(approval_status=S.PENDING).order_by("-reviewed_at")[:5],
         "latest_pending": qs.filter(approval_status=S.PENDING).order_by("created_at")[:3],
+        "pending_requests_count": restriction_services.pending_request_count(),
+        "active_restrictions_count": restriction_services.active_restriction_count(),
     }
     return render(request, "approvals/overview.html", ctx)
 

@@ -18,5 +18,8 @@
     </div></div>
   <div class="setrow"><div class="lab"><b>Account</b><span>How you sign in.</span></div>
     <div class="val kvlist"><span><b>{{ user.username }}</b></span>{% if user.email and user.email != user.username %}<span style="color:var(--mute)">{{ user.email }}</span>{% endif %}</div></div>
+  {% if can_request %}<div class="setrow"><div class="lab"><b>Access restrictions</b><span>Ask the administrator to keep a person or vehicle out of the property.</span></div>
+    <div class="val kvlist"><span><b>{{ pending_requests }}</b> pending request{{ pending_requests|pluralize }} &middot; <b>{{ active_restrictions }}</b> active restriction{{ active_restrictions|pluralize }}</span>
+      <span><a class="linkbtn" href="{% url 'restrictions:mine' %}">Manage restrictions</a></span></div></div>{% endif %}
 </div>
 {% endblock %}

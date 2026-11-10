@@ -11,6 +11,8 @@ class AuditLog(models.Model):
         APPROVE_REQUEST = "APPROVE_REQUEST", "Approve request"
         REJECT_REQUEST = "REJECT_REQUEST", "Reject request"
         REVOKE_RESTRICTION = "REVOKE_RESTRICTION", "Revoke restriction"
+        SUBMIT_REQUEST = "SUBMIT_REQUEST", "Submit request"
+        CANCEL_REQUEST = "CANCEL_REQUEST", "Cancel request"
 
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="audit_logs")
     action = models.CharField(max_length=30, choices=Action.choices)

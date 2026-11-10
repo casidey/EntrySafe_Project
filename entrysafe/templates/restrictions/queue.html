@@ -1,0 +1,31 @@
+{% extends "shell.html" %}
+{% block title %}Restriction requests — EntrySafe{% endblock %}
+{% block page_title %}Restriction requests{% endblock %}
+{% block page_sub %}Review what residents have asked to restrict.{% endblock %}
+{% block content %}
+<div class="tablist2">
+  <a class="tab2" href="?status=pending" {% if status == 'pending' %}aria-current="true"{% endif %}>Pending<span class="n">{{ counts.pending }}</span></a>
+  <a class="tab2" href="?status=approved" {% if status == 'approved' %}aria-current="true"{% endif %}>Approved<span class="n">{{ counts.approved }}</span></a>
+  <a class="tab2" href="?status=rejected" {% if status == 'rejected' %}aria-current="true"{% endif %}>Rejected<span class="n">{{ counts.rejected }}</span></a>
+  <a class="tab2" href="?status=cancelled" {% if status == 'cancelled' %}aria-current="true"{% endif %}>Cancelled<span class="n">{{ counts.cancelled }}</span></a>
+</div>
+
+<div class="section">
+  {% for x in items %}
+  <div class="list-row tall">
+    <div class="ico"><svg><use href="#i-{{ x.icon }}"/></svg></div>
+    <div class="main2">
+      <b>{{ x.title }} <span class="mono" style="font-weight:500;color:var(--mute);font-size:12px">{{ x.ref }}</span></b>
+      <span>{{ x.type_label }}{% if x.detail %} &middot; {{ x.detail }}{% endif %}</span>
+      <div class="meta-grid"><span>From {{ x.resident_name }}{% if x.resident_unit %}, {{ x.resident_unit }}{% endif %}</span><span>Submitted {{ x.obj.created_at|date:"M d, Y" }}</span>
+        {% if x.obj.reviewed_at %}<span>Reviewed {{ x.obj.reviewed_at|date:"M d, Y" }}{% if x.obj.reviewed_by %} by {{ x.obj.reviewed_by.get_username }}{% endif %}</span>{% endif %}
+        {% if x.obj.admin_remarks %}<span>Remarks: {{ x.obj.admin_remarks }}</span>{% endif %}</div>
+    </div>
+    <div class="actions">
+      {% if x.is_pending %}<a class="btn btn-p btn-sm" href="{% url 'restrictions:review' x.kind x.obj.pk %}">Review</a>
+      {% else %}<a class="btn btn-s btn-sm" href="{% url 'restrictions:review' x.kind x.obj.pk %}">View</a><span class="pill {{ x.pill }}">{{ x.obj.get_status_display }}</span>{% endif %}
+    </div>
+  </div>
+  {% empty %}<div class="empty">No {{ status }} requests.</div>{% endfor %}
+</div>
+{% endblock %}
