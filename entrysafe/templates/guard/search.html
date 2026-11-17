@@ -19,7 +19,25 @@
 {% elif searched and results %}
   <div class="alert" role="alert" style="margin-bottom:18px"><svg><use href="#i-alert"/></svg><span><b>Restricted:</b> {{ results|length }} active restriction{{ results|length|pluralize }} match{{ results|length|pluralize:"es," }} &ldquo;{{ query }}&rdquo;. Do not allow entry; follow the instructions below.</span></div>
 {% elif searched %}
-  <div class="alert ok" role="status" style="margin-bottom:18px"><svg><use href="#i-check2"/></svg><span><b>Clear:</b> no active restriction matches &ldquo;{{ query }}&rdquo;.</span></div>
+  <div class="alert ok" role="status" style="margin-bottom:12px"><svg><use href="#i-check2"/></svg><span><b>Clear:</b> no active restriction matches &ldquo;{{ query }}&rdquo;.</span></div>
+  <form class="gate-record gate-record-clear" method="post" action="{% url 'guard:record' %}" aria-label="Record this clear check">
+    {% csrf_token %}
+    <input type="hidden" name="q" value="{{ query }}">
+    <input type="hidden" name="query_input" value="{{ query }}">
+    <div class="gate-record-h"><b>Record this check</b><span>Saved to the gate log. Nobody is notified unless you escalate.</span></div>
+    <div class="gate-record-row clear">
+      <select class="inp" name="kind" aria-label="Checked a">
+        <option value="person"{% if clear_kind == 'person' %} selected{% endif %}>Person</option>
+        <option value="vehicle"{% if clear_kind == 'vehicle' %} selected{% endif %}>Vehicle</option>
+      </select>
+      {% include "guard/_gate_select.html" %}
+      <select class="inp" name="action_taken" aria-label="Action taken">
+        {% for value, text in actions %}<option value="{{ value }}"{% if value == 'ALLOWED_ENTRY' %} selected{% endif %}>{{ text }}</option>{% endfor %}
+      </select>
+      <input class="inp" name="guard_notes" maxlength="1000" placeholder="Notes (optional)" aria-label="Notes">
+      <button class="btn btn-p btn-sm" type="submit">Record</button>
+    </div>
+  </form>
 {% endif %}
 
 <div class="section">
@@ -39,6 +57,22 @@
         <span>Reason: {{ x.obj.restriction_reason|truncatechars:120 }}</span>
       </div>
       {% if x.obj.guard_instructions %}<div style="margin-top:8px;font-size:13.5px"><b>Instructions:</b> {{ x.obj.guard_instructions }}</div>{% endif %}
+      <form class="gate-record" method="post" action="{% url 'guard:record' %}" aria-label="Record the outcome for {{ x.title }}">
+        {% csrf_token %}
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="kind" value="{{ x.kind }}">
+        <input type="hidden" name="pk" value="{{ x.obj.pk }}">
+        <input type="hidden" name="query_input" value="{% if searched %}{{ query }}{% else %}{{ x.title }}{% endif %}">
+        <div class="gate-record-h"><b>Record outcome</b><span>The resident who filed this restriction is notified.</span></div>
+        <div class="gate-record-row">
+          {% include "guard/_gate_select.html" %}
+          <select class="inp" name="action_taken" aria-label="Action taken">
+            {% for value, text in actions %}<option value="{{ value }}"{% if value == 'DENIED_ENTRY' %} selected{% endif %}>{{ text }}</option>{% endfor %}
+          </select>
+          <input class="inp" name="guard_notes" maxlength="1000" placeholder="Notes (optional)" aria-label="Notes">
+          <button class="btn btn-p btn-sm" type="submit">Record</button>
+        </div>
+      </form>
     </div>
     <div class="actions"><span class="pill red">Restricted</span></div>
   </div>

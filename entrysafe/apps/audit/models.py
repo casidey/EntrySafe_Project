@@ -14,6 +14,7 @@ class AuditLog(models.Model):
         SUBMIT_REQUEST = "SUBMIT_REQUEST", "Submit request"
         CANCEL_REQUEST = "CANCEL_REQUEST", "Cancel request"
         CREATE_ACCOUNT = "CREATE_ACCOUNT", "Create account"
+        RECORD_VERIFICATION = "RECORD_VERIFICATION", "Record gate verification"
 
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="audit_logs")
     action = models.CharField(max_length=30, choices=Action.choices)

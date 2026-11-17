@@ -1,0 +1,14 @@
+{% extends "shell.html" %}
+{% block title %}My checks — EntrySafe{% endblock %}
+{% block page_title %}My checks{% endblock %}
+{% block page_sub %}Gate checks you recorded, newest first.{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="section-h"><div>
+    <h2>Today</h2>
+    <p>{{ today_total }} check{{ today_total|pluralize }} recorded, {{ today_restricted }} restricted match{{ today_restricted|pluralize:"es" }}.</p>
+  </div><a class="btn btn-s btn-sm" href="{% url 'guard:search' %}"><svg><use href="#i-search"/></svg>Gate check</a></div>
+  {% for x in items %}{% include "guard/_log_row.html" %}
+  {% empty %}<div class="empty">You have not recorded any checks yet. Search on Gate check, then press Record.</div>{% endfor %}
+</div>
+{% endblock %}

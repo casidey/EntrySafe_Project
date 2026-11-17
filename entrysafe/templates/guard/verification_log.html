@@ -1,0 +1,38 @@
+{% extends "shell.html" %}
+{% block title %}Gate log — EntrySafe{% endblock %}
+{% block page_title %}Gate log{% endblock %}
+{% block page_sub %}Every check the guards recorded at the gates.{% endblock %}
+{% block content %}
+<div class="tablist2">
+  <a class="tab2" href="?result=all{% if filter_qs %}&amp;{{ filter_qs }}{% endif %}" {% if result == 'all' %}aria-current="true"{% endif %}>All<span class="n">{{ counts.all }}</span></a>
+  <a class="tab2" href="?result=restricted{% if filter_qs %}&amp;{{ filter_qs }}{% endif %}" {% if result == 'restricted' %}aria-current="true"{% endif %}>Restricted matches<span class="n">{{ counts.restricted }}</span></a>
+  <a class="tab2" href="?result=clear{% if filter_qs %}&amp;{{ filter_qs }}{% endif %}" {% if result == 'clear' %}aria-current="true"{% endif %}>Clear<span class="n">{{ counts.clear }}</span></a>
+</div>
+
+<form class="log-filters" method="get" action="{% url 'guard:log' %}" aria-label="Filter the gate log">
+  <input type="hidden" name="result" value="{{ result }}">
+  <select class="inp" name="action" aria-label="Action taken">
+    <option value="">Any action</option>
+    {% for value, text in actions %}<option value="{{ value }}"{% if value == action %} selected{% endif %}>{{ text }}</option>{% endfor %}
+  </select>
+  <select class="inp" name="gate" aria-label="Gate">
+    <option value="">Any gate</option>
+    {% for value, text in gates %}<option value="{{ value }}"{% if value == gate %} selected{% endif %}>{{ text }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-p btn-sm" type="submit">Filter</button>
+  {% if action or gate %}<a class="btn btn-s btn-sm" href="?result={{ result }}">Reset</a>{% endif %}
+</form>
+
+<div class="section">
+  {% for x in items %}{% include "guard/_log_row.html" with show_guard=True %}
+  {% empty %}<div class="empty">No gate checks match these filters.</div>{% endfor %}
+</div>
+
+{% if page.has_other_pages %}
+<div class="actions-bar">
+  {% if page.has_previous %}<a class="btn btn-s btn-sm" href="?{{ page_qs }}&amp;page={{ page.previous_page_number }}">Newer</a>{% endif %}
+  <span style="align-self:center;font-size:13px;color:var(--mute)">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn btn-s btn-sm" href="?{{ page_qs }}&amp;page={{ page.next_page_number }}">Older</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -7,6 +7,7 @@ _ALSO_CURRENT = {
     "registrations": {"approve", "disapprove", "proof"},
     "queue": {"review", "approve", "reject", "request_photo"},
     "restricted": {"restricted_photo"},
+    "search": {"record"},
 }
 
 
@@ -21,10 +22,14 @@ def _nav(user):
             ("approvals:registrations", "Registrations", "check2", "approvals", "registrations"),
             ("restrictions:queue", "Requests", "list", "restrictions", "queue"),
             ("restrictions:restricted", "Restricted list", "shield", "restrictions", "restricted"),
+            ("guard:log", "Gate log", "eye", "guard", "log"),
             ("approvals:accounts", "Accounts", "user", "approvals", "accounts"),
         ]
     elif _role(user) == "GUARD":
-        items = [("guard:search", "Gate check", "search", "guard", None)]
+        items = [
+            ("guard:search", "Gate check", "search", "guard", "search"),
+            ("guard:my_checks", "My checks", "list", "guard", "my_checks"),
+        ]
     else:
         items = [
             ("home:home", "Home", "home", "home", None),

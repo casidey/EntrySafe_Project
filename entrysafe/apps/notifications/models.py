@@ -9,6 +9,7 @@ class Notification(models.Model):
         ACCOUNT_STATUS = "ACCOUNT_STATUS", "Account status"
         REQUEST_STATUS = "REQUEST_STATUS", "Request status"
         NEW_RESTRICTION = "NEW_RESTRICTION", "New restriction"
+        GATE_ACTIVITY = "GATE_ACTIVITY", "Gate activity"
 
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     title = models.CharField(max_length=150)  # alert subject title

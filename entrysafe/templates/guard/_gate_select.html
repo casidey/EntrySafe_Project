@@ -1,0 +1,3 @@
+<select class="inp" name="gate_location" aria-label="Gate">
+  {% for value, text in gates %}<option value="{{ value }}"{% if value == gate %} selected{% endif %}>{{ text }}</option>{% endfor %}
+</select>
