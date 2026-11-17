@@ -355,3 +355,5 @@ a.side-item, a.rail-item, a.mob-item, a.btn, a.tab2, a.iconbtn { text-decoration
 .note-row { text-decoration: none; color: inherit; }
 .note-row:hover { background: var(--surface2); }
 .note-row:not(.unread) .main2 b { font-weight: 500; color: var(--mute); }
+.link-row { text-decoration: none; color: inherit; }
+.link-row:hover { background: var(--surface2); }

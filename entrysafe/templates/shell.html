@@ -26,7 +26,8 @@
   <div class="main" id="mainScroll">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="tsearch"><svg><use href="#i-search"/></svg><input id="topSearch" type="search" placeholder="Search" aria-label="Filter this page"></div>
+        {% if user.is_staff %}<form class="tsearch" role="search" method="get" action="{% url 'approvals:search' %}"><svg><use href="#i-search"/></svg><input id="topSearch" name="q" type="search" placeholder="Search everything (press Enter)" aria-label="Filter this page, or press Enter to search all records"></form>
+        {% else %}<div class="tsearch"><svg><use href="#i-search"/></svg><input id="topSearch" type="search" placeholder="Search" aria-label="Filter this page"></div>{% endif %}
         <a class="iconbtn bell" href="{% url 'notifications:list' %}" aria-label="Notifications{% if shell_unread %}, {{ shell_unread }} unread{% endif %}" title="Notifications"><svg><use href="#i-bell"/></svg>{% if shell_unread %}<span class="bell-n">{% if shell_unread > 99 %}99+{% else %}{{ shell_unread }}{% endif %}</span>{% endif %}</a>
         <a class="btn btn-s btn-sm mob-only" href="{% url 'login:logout' %}">Sign Out</a>
       </div>

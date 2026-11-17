@@ -1,0 +1,37 @@
+{% extends "shell.html" %}
+{% block title %}Search — EntrySafe{% endblock %}
+{% block page_title %}Search{% endblock %}
+{% block page_sub %}Find people, vehicles, requests, residents and gate checks in one place.{% endblock %}
+{% block content %}
+<form method="get" action="{% url 'approvals:search' %}" role="search">
+  <div style="display:flex;gap:10px;align-items:center">
+    <div style="position:relative;flex:1">
+      <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--mute);pointer-events:none"><use href="#i-search"/></svg>
+      <input class="inp" name="q" value="{{ q }}" placeholder="Name, plate, unit, email or notes, e.g. Villanueva or NBX 4471" aria-label="Search all records" autocomplete="off" autofocus style="padding-left:40px">
+    </div>
+    <button class="btn btn-p btn-sm" type="submit" style="width:auto">Search</button>
+    {% if q %}<a class="btn btn-s btn-sm" href="{% url 'approvals:search' %}">Clear</a>{% endif %}
+  </div>
+</form>
+
+{% if too_short %}
+  <div class="alert" role="status"><svg><use href="#i-alert"/></svg><span>Type at least 2 characters to search.</span></div>
+{% elif q %}
+  <p style="margin:16px 0 4px;font-size:13.5px;color:var(--mute)">{{ found }} result{{ found|pluralize }} for &ldquo;{{ q }}&rdquo;.</p>
+  {% for g in groups %}{% if g.total %}
+  <div class="section" style="margin-top:18px">
+    <div class="section-h"><div><h2>{{ g.title }}</h2><p>{{ g.total }} match{{ g.total|pluralize:"es" }}{% if g.total > g.rows|length %}, showing the first {{ g.rows|length }}{% endif %}.</p></div></div>
+    {% for r in g.rows %}
+    <a class="list-row link-row" href="{{ r.url }}">
+      <div class="ico"><svg><use href="#i-{{ g.icon }}"/></svg></div>
+      <div class="main2"><b>{{ r.title }}</b>{% if r.sub %}<span>{{ r.sub }}</span>{% endif %}</div>
+      <div class="actions"><span class="pill{% if r.red %} red{% elif r.pill == 'Active' or r.pill == 'Approved' or r.pill == 'Clear' %} green{% endif %}">{{ r.pill }}</span></div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}{% endfor %}
+  {% if not found %}<div class="empty" style="margin-top:18px">Nothing matches &ldquo;{{ q }}&rdquo;.</div>{% endif %}
+{% else %}
+  <div class="empty" style="margin-top:18px">Search restricted people and vehicles, restriction requests, residents and the gate log.</div>
+{% endif %}
+{% endblock %}

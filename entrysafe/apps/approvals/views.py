@@ -192,3 +192,16 @@ def audit_view(request):
         "items": rows, "page": page, "action": action, "q": q, "actions": AuditLog.Action.choices,
         "total": logs.count(), "page_qs": urlencode(keep),
     })
+
+
+@_guard
+def search_view(request):
+    """Search one query across restrictions, requests, residents and the gate log."""
+    from .search import MIN_QUERY, search
+
+    q = " ".join(request.GET.get("q", "").split())[:100]
+    groups = search(q)
+    return render(request, "approvals/search.html", {
+        "q": q, "groups": groups, "too_short": bool(q) and len(q) < MIN_QUERY,
+        "found": sum(g["total"] for g in groups),
+    })

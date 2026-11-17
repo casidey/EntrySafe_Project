@@ -165,3 +165,60 @@ class AuditLogPageTests(TestCase):
         self.assertEqual(self.client.get(self.url, {"q": "restricted person"}).context["total"], 1)
         self.assertEqual(self.client.get(self.url, {"q": "nothing-like-this"}).context["total"], 0)
         self.assertEqual(self.client.get(self.url, {"action": "BOGUS"}).context["total"], 3)
+
+
+class AdminSearchTests(TestCase):
+    def setUp(self):
+        from apps.guard import services as gate
+        from apps.restrictions import services
+
+        self.admin = User.objects.create_user("boss", password="x", is_staff=True)
+        self.resident = User.objects.create_user("rita@example.com", email="rita@example.com", password="x")
+        UserProfile.objects.create(user=self.resident, full_name="Rita Reyes", unit_number="Tower 2, Unit 1408",
+                                   approval_status="APPROVED")
+        guard = User.objects.create_user("gate", password="x")
+        UserProfile.objects.create(user=guard, role="GUARD", approval_status="APPROVED")
+        req, _, _ = services.submit("person", self.resident, {
+            "first_name": "Ramon", "last_name": "Villanueva", "reason": "Trespassing"}, consent=True)
+        self.person = services.approve_request("person", req.pk, self.admin)
+        services.submit("vehicle", self.resident, {"license_plate": "NBX 4471", "vehicle_type": "SUV",
+                                                   "make_model": "Toyota Fortuner", "reason": "Fire lane"}, consent=True)
+        gate.record_match(guard, "person", self.person.pk, "villanueva", "MAIN_GATE", "DENIED_ENTRY", "Left calmly")
+        self.url = reverse("approvals:search")
+
+    def totals(self, q):
+        self.client.force_login(self.admin)
+        page = self.client.get(self.url, {"q": q})
+        return {g["title"]: g["total"] for g in page.context["groups"] if g["total"]}
+
+    def test_admin_only(self):
+        self.client.force_login(self.resident)
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_name_finds_restriction_request_and_gate_log(self):
+        self.assertEqual(self.totals("villanueva"),
+                         {"Restricted people": 1, "Person requests": 1, "Gate log": 1})
+
+    def test_plate_ignores_spaces_and_case(self):
+        self.assertEqual(self.totals("nbx4471"), {"Vehicle requests": 1})
+        self.assertEqual(self.totals("fortuner"), {"Vehicle requests": 1})
+
+    def test_resident_by_unit_email_and_requests_by_resident_name(self):
+        self.assertEqual(self.totals("1408")["Residents"], 1)
+        self.assertEqual(self.totals("rita@example.com")["Residents"], 1)
+        self.assertEqual(self.totals("rita reyes"), {"Person requests": 1, "Vehicle requests": 1, "Residents": 1})
+
+    def test_links_and_short_or_empty_queries(self):
+        self.client.force_login(self.admin)
+        page = self.client.get(self.url, {"q": "villanueva"})
+        self.assertContains(page, reverse("restrictions:restricted") + "?status=active")
+        self.assertContains(page, reverse("guard:log"))
+        self.assertTrue(self.client.get(self.url, {"q": "v"}).context["too_short"])
+        self.assertContains(self.client.get(self.url, {"q": "zzzz"}), "Nothing matches")
+        self.assertEqual(self.client.get(self.url).context["groups"], [])
+
+    def test_top_bar_search_submits_here_for_admins_only(self):
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse("approvals:overview")), f'action="{self.url}"')
+        self.client.force_login(self.resident)
+        self.assertNotContains(self.client.get(reverse("profile:profile")), f'action="{self.url}"')
