@@ -1,0 +1,35 @@
+{% extends "shell.html" %}
+{% block title %}Notifications — EntrySafe{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block page_sub %}Updates about your account, restrictions and the gate.{% endblock %}
+{% block content %}
+<div class="section-h" style="padding-bottom:0">
+  <div class="tablist2" style="margin:0">
+    <a class="tab2" href="?show=all" {% if show == 'all' %}aria-current="true"{% endif %}>All<span class="n">{{ counts.all }}</span></a>
+    <a class="tab2" href="?show=unread" {% if show == 'unread' %}aria-current="true"{% endif %}>Unread<span class="n">{{ counts.unread }}</span></a>
+  </div>
+  {% if counts.unread %}<form class="inline-form" method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}<button class="btn btn-s btn-sm" type="submit"><svg><use href="#i-check2"/></svg>Mark all as read</button></form>{% endif %}
+</div>
+
+<div class="section" style="margin-top:16px">
+  {% for x in items %}
+  <a class="list-row tall note-row{% if not x.obj.is_read %} unread{% endif %}" href="{% url 'notifications:open' x.obj.pk %}">
+    <div class="ico"><svg><use href="#i-{{ x.icon }}"/></svg></div>
+    <div class="main2">
+      <b>{{ x.obj.title }}</b>
+      <span>{{ x.obj.message }}</span>
+      <div class="meta-grid"><span>{{ x.obj.get_notification_type_display }}</span><span>{{ x.obj.created_at|date:"M d, Y g:i A" }}</span></div>
+    </div>
+    <div class="actions">{% if not x.obj.is_read %}<span class="pill green">New</span>{% endif %}</div>
+  </a>
+  {% empty %}<div class="empty">{% if show == 'unread' %}You're all caught up.{% else %}No notifications yet.{% endif %}</div>{% endfor %}
+</div>
+
+{% if page.has_other_pages %}
+<div class="actions-bar">
+  {% if page.has_previous %}<a class="btn btn-s btn-sm" href="?show={{ show }}&amp;page={{ page.previous_page_number }}">Newer</a>{% endif %}
+  <span style="align-self:center;font-size:13px;color:var(--mute)">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn btn-s btn-sm" href="?show={{ show }}&amp;page={{ page.next_page_number }}">Older</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

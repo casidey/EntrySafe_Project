@@ -1,6 +1,8 @@
 """Template context shared by every page: the app-shell navigation and the active theme."""
 from django.urls import reverse
 
+from apps.notifications.models import Notification
+
 
 # url names (inside a namespace) that light up a nav item besides the item's own name
 _ALSO_CURRENT = {
@@ -24,6 +26,7 @@ def _nav(user):
             ("restrictions:restricted", "Restricted list", "shield", "restrictions", "restricted"),
             ("guard:log", "Gate log", "eye", "guard", "log"),
             ("approvals:accounts", "Accounts", "user", "approvals", "accounts"),
+            ("approvals:audit", "Audit log", "doc", "approvals", "audit"),
         ]
     elif _role(user) == "GUARD":
         items = [
@@ -66,4 +69,5 @@ def shell(request):
         "shell_display_name": user.get_full_name() or user.get_username(),
         "shell_role_label": "Administrator" if user.is_staff else ("Guard" if _role(user) == "GUARD" else "Resident"),
         "shell_unit": getattr(getattr(user, "profile", None), "unit_label", ""),
+        "shell_unread": Notification.objects.filter(recipient=user, is_read=False).count(),
     }

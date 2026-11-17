@@ -163,3 +163,32 @@ def accounts_view(request):
                      "contact": p.contact_number if p else ""})
     ctx["accounts"] = rows
     return render(request, "approvals/accounts.html", ctx)
+
+
+@_guard
+def audit_view(request):
+    """Read-only audit trail: who did what to which record, newest first."""
+    from urllib.parse import urlencode
+
+    from django.core.paginator import Paginator
+
+    action = request.GET.get("action", "")
+    action = action if action in AuditLog.Action.values else ""
+    q = " ".join(request.GET.get("q", "").split())[:100]
+    logs = AuditLog.objects.select_related("user__profile")
+    if action:
+        logs = logs.filter(action=action)
+    for term in q.split():  # every word must appear in the summary, record type or username
+        logs = logs.filter(Q(change_summary__icontains=term) | Q(target_entity__icontains=term)
+                           | Q(user__username__icontains=term) | Q(user__profile__full_name__icontains=term))
+    page = Paginator(logs, 25).get_page(request.GET.get("page"))
+    rows = []
+    for log in page:
+        profile = getattr(log.user, "profile", None) if log.user_id else None
+        rows.append({"obj": log, "who": (profile.full_name if profile and profile.full_name else "")
+                     or (log.user.get_username() if log.user_id else "System")})
+    keep = {k: v for k, v in (("action", action), ("q", q)) if v}
+    return render(request, "approvals/audit.html", {
+        "items": rows, "page": page, "action": action, "q": q, "actions": AuditLog.Action.choices,
+        "total": logs.count(), "page_qs": urlencode(keep),
+    })

@@ -129,3 +129,39 @@ class StaffAccountTests(TestCase):
     def test_nav_shows_accounts_for_admin(self):
         self.client.force_login(self.admin)
         self.assertContains(self.client.get(reverse("approvals:overview")), self.url)
+
+
+class AuditLogPageTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user("boss", password="x", is_staff=True)
+        self.resident = User.objects.create_user("res", password="x")
+        UserProfile.objects.create(user=self.resident, full_name="Rita Reyes", approval_status="APPROVED")
+        self.url = reverse("approvals:audit")
+        AuditLog.record(self.admin, AuditLog.Action.APPROVE_REQUEST, "PersonRestrictionRequest", 1,
+                        "Approved the person restriction request for Ramon Villanueva.")
+        AuditLog.record(self.resident, AuditLog.Action.SUBMIT_REQUEST, "VehicleRestrictionRequest", 2,
+                        "Submitted a vehicle restriction request for NBX 4471.")
+        AuditLog.record(None, AuditLog.Action.REVOKE_RESTRICTION, "RestrictedPerson", 3, "")
+
+    def test_admin_only(self):
+        self.assertIn(reverse("login:login"), self.client.get(self.url)["Location"])
+        self.client.force_login(self.resident)
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_lists_everything_newest_first_with_nav(self):
+        self.client.force_login(self.admin)
+        page = self.client.get(self.url)
+        self.assertEqual(page.context["total"], 3)
+        self.assertEqual([x["who"] for x in page.context["items"]], ["System", "Rita Reyes", "boss"])
+        self.assertContains(page, "Submitted a vehicle restriction request for NBX 4471.")
+        self.assertContains(page, "Revoke restriction")  # falls back to the action name when there is no summary
+        self.assertContains(page, 'href="%s"' % self.url)
+
+    def test_filter_by_action_and_text(self):
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get(self.url, {"action": "SUBMIT_REQUEST"}).context["total"], 1)
+        self.assertEqual(self.client.get(self.url, {"q": "villanueva"}).context["total"], 1)
+        self.assertEqual(self.client.get(self.url, {"q": "rita"}).context["total"], 1)  # user's full name
+        self.assertEqual(self.client.get(self.url, {"q": "restricted person"}).context["total"], 1)
+        self.assertEqual(self.client.get(self.url, {"q": "nothing-like-this"}).context["total"], 0)
+        self.assertEqual(self.client.get(self.url, {"action": "BOGUS"}).context["total"], 3)

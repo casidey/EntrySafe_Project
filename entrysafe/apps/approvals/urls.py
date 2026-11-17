@@ -11,4 +11,5 @@ urlpatterns = [
     path("registrations/<int:pk>/disapprove/", views.disapprove_view, name="disapprove"),
     path("registrations/<int:pk>/proof/", views.proof_view, name="proof"),
     path("accounts/", views.accounts_view, name="accounts"),
+    path("audit/", views.audit_view, name="audit"),
 ]

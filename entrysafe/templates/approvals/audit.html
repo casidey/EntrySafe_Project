@@ -1,0 +1,38 @@
+{% extends "shell.html" %}
+{% block title %}Audit log — EntrySafe{% endblock %}
+{% block page_title %}Audit log{% endblock %}
+{% block page_sub %}Every action that changed something in EntrySafe, newest first.{% endblock %}
+{% block content %}
+<form class="log-filters" method="get" action="{% url 'approvals:audit' %}" aria-label="Filter the audit log">
+  <input class="inp" name="q" value="{{ q }}" placeholder="Search summary, record or user" aria-label="Search the audit log" style="min-width:260px">
+  <select class="inp" name="action" aria-label="Action">
+    <option value="">Any action</option>
+    {% for value, text in actions %}<option value="{{ value }}"{% if value == action %} selected{% endif %}>{{ text }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-p btn-sm" type="submit">Filter</button>
+  {% if action or q %}<a class="btn btn-s btn-sm" href="{% url 'approvals:audit' %}">Reset</a>{% endif %}
+  <span style="font-size:13px;color:var(--mute)">{{ total }} entr{{ total|pluralize:"y,ies" }}</span>
+</form>
+
+<div class="section">
+  {% for x in items %}
+  <div class="list-row tall">
+    <div class="ico"><svg><use href="#i-doc"/></svg></div>
+    <div class="main2">
+      <b>{{ x.obj.change_summary|default:x.obj.get_action_display }}</b>
+      <span>{{ x.who }} &middot; {{ x.obj.timestamp|date:"M d, Y g:i A" }}</span>
+      <div class="meta-grid"><span>Record: {{ x.obj.target_entity }}{% if x.obj.target_id %} #{{ x.obj.target_id }}{% endif %}</span>{% if x.obj.ip_address %}<span>IP {{ x.obj.ip_address }}</span>{% endif %}</div>
+    </div>
+    <div class="actions"><span class="pill">{{ x.obj.get_action_display }}</span></div>
+  </div>
+  {% empty %}<div class="empty">No audit entries match these filters.</div>{% endfor %}
+</div>
+
+{% if page.has_other_pages %}
+<div class="actions-bar">
+  {% if page.has_previous %}<a class="btn btn-s btn-sm" href="?{{ page_qs }}&amp;page={{ page.previous_page_number }}">Newer</a>{% endif %}
+  <span style="align-self:center;font-size:13px;color:var(--mute)">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn btn-s btn-sm" href="?{{ page_qs }}&amp;page={{ page.next_page_number }}">Older</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

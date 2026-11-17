@@ -348,3 +348,10 @@ a.side-item, a.rail-item, a.mob-item, a.btn, a.tab2, a.iconbtn { text-decoration
 .log-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
 .log-filters .inp { width: auto; min-width: 160px; }
 @media (max-width: 800px) { .gate-record-row, .gate-record-row.clear { grid-template-columns: 1fr; } }
+/* notifications: bell in the top bar and the feed */
+.iconbtn.bell { position: relative; width: 38px; height: 38px; flex: none; }
+.iconbtn.bell svg { width: 17px; height: 17px; }
+.bell-n { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: var(--err); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--surface); }
+.note-row { text-decoration: none; color: inherit; }
+.note-row:hover { background: var(--surface2); }
+.note-row:not(.unread) .main2 b { font-weight: 500; color: var(--mute); }

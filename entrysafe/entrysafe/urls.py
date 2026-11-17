@@ -10,5 +10,6 @@ urlpatterns = [
     path("approvals/", include("apps.approvals.urls")),
     path("restrictions/", include("apps.restrictions.urls")),
     path("guard/", include("apps.guard.urls")),
+    path("notifications/", include("apps.notifications.urls")),
     path("", include("apps.home.urls")),
 ]
