@@ -7,6 +7,7 @@ from apps.notifications.models import Notification
 # url names (inside a namespace) that light up a nav item besides the item's own name
 _ALSO_CURRENT = {
     "registrations": {"approve", "disapprove", "proof"},
+    "accounts": {"account_edit", "account_status"},
     "queue": {"review", "approve", "reject", "request_photo"},
     "restricted": {"restricted_photo"},
     "search": {"record"},

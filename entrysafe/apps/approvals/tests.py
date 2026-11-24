@@ -222,3 +222,151 @@ class AdminSearchTests(TestCase):
         self.assertContains(self.client.get(reverse("approvals:overview")), f'action="{self.url}"')
         self.client.force_login(self.resident)
         self.assertNotContains(self.client.get(reverse("profile:profile")), f'action="{self.url}"')
+
+
+class AccountManagementTests(TestCase):
+    def setUp(self):
+        from apps.notifications.models import Notification
+
+        self.Notification = Notification
+        self.admin = User.objects.create_user("boss", password="x", is_staff=True)
+        UserProfile.objects.create(user=self.admin, role="ADMIN", full_name="Ana Admin", approval_status="APPROVED")
+        self.guard = User.objects.create_user("gate", password="OldPass!2026", email="gate@example.com")
+        UserProfile.objects.create(user=self.guard, role="GUARD", full_name="Gerry Gate", approval_status="APPROVED")
+        self.resident = User.objects.create_user("rita", password="RitaPass!2026", email="rita@example.com")
+        UserProfile.objects.create(user=self.resident, full_name="Rita Reyes", unit_number="Tower 2, Unit 1408",
+                                   approval_status="APPROVED")
+        self.pending = User.objects.create_user("newbie", password="x", is_active=False)
+        UserProfile.objects.create(user=self.pending, full_name="New Person", approval_status="PENDING")
+        self.client.force_login(self.admin)
+
+    def edit(self, user, **data):
+        base = {"full_name": user.profile.full_name, "email": user.email,
+                "contact_number": user.profile.contact_number, "unit_number": user.profile.unit_number}
+        return self.client.post(reverse("approvals:account_edit", args=[user.pk]), {**base, **data})
+
+    def status(self, user, action, reason=""):
+        return self.client.post(reverse("approvals:account_status", args=[user.pk]), {"action": action, "reason": reason})
+
+    # ---- lists
+    def test_tabs_list_staff_and_approved_residents_with_edit_links(self):
+        staff = self.client.get(reverse("approvals:accounts"))
+        self.assertEqual(staff.context["counts"], {"staff": 2, "residents": 1})
+        self.assertContains(staff, reverse("approvals:account_edit", args=[self.guard.pk]))
+        self.assertContains(staff, "Create account")
+        residents = self.client.get(reverse("approvals:accounts"), {"tab": "residents"})
+        self.assertEqual([r["user"] for r in residents.context["accounts"]], [self.resident])
+        self.assertContains(residents, "Tower 2, Unit 1408")
+        self.assertNotContains(residents, "Create account")
+        self.assertNotContains(residents, "New Person")  # pending registrations stay on Registrations
+
+    def test_pending_registration_cannot_be_managed_here(self):
+        self.assertEqual(self.client.get(reverse("approvals:account_edit", args=[self.pending.pk])).status_code, 404)
+        self.assertEqual(self.status(self.pending, "reactivate").status_code, 404)
+        self.pending.refresh_from_db()
+        self.assertFalse(self.pending.is_active)
+
+    def test_admin_only(self):
+        self.client.force_login(self.guard)
+        self.assertEqual(self.client.get(reverse("approvals:account_edit", args=[self.resident.pk])).status_code, 302)
+        self.assertEqual(self.status(self.resident, "deactivate").status_code, 302)
+        self.resident.refresh_from_db()
+        self.assertTrue(self.resident.is_active)
+
+    # ---- edit
+    def test_edit_details_notifies_and_audits(self):
+        resp = self.edit(self.guard, full_name="Gerardo Gate", contact_number="0917 000 1111")
+        self.assertRedirects(resp, reverse("approvals:account_edit", args=[self.guard.pk]), fetch_redirect_response=False)
+        self.guard.refresh_from_db()
+        self.assertEqual((self.guard.profile.full_name, self.guard.profile.contact_number, self.guard.first_name),
+                         ("Gerardo Gate", "0917 000 1111", "Gerardo Gate"))
+        audit = AuditLog.objects.get(action="UPDATE_ACCOUNT")
+        self.assertIn("name, contact number", audit.change_summary)
+        note = self.Notification.objects.get(recipient=self.guard)
+        self.assertEqual(note.title, "Account details updated")
+        self.assertNotIn("0917", note.message)  # says what changed, not the values
+
+    def test_resident_unit_required_and_saved(self):
+        self.assertContains(self.edit(self.resident, unit_number=""), "tower and unit")
+        self.edit(self.resident, unit_number="Tower 1, Unit 705")
+        self.resident.refresh_from_db()
+        self.assertEqual(self.resident.profile.unit_number, "Tower 1, Unit 705")
+
+    def test_unit_ignored_for_staff(self):
+        self.edit(self.guard, unit_number="Tower 9")
+        self.guard.refresh_from_db()
+        self.assertEqual(self.guard.profile.unit_number, "")
+
+    def test_email_must_be_valid_and_unique(self):
+        self.assertContains(self.edit(self.guard, email="not-an-email"), "valid email")
+        self.assertContains(self.edit(self.guard, email="RITA@example.com"), "Another account already uses this email")
+        self.assertContains(self.edit(self.guard, full_name=""), "Please enter a full name")
+        self.guard.refresh_from_db()
+        self.assertEqual(self.guard.email, "gate@example.com")
+
+    def test_set_new_password(self):
+        self.assertContains(self.edit(self.guard, new_password="123"), "too short")
+        self.edit(self.guard, new_password="Fresh-Gate-Pass-77")
+        self.guard.refresh_from_db()
+        self.assertTrue(self.guard.check_password("Fresh-Gate-Pass-77"))
+        self.assertIn("password", AuditLog.objects.get(action="UPDATE_ACCOUNT").change_summary)
+        self.assertNotIn("Fresh", AuditLog.objects.get(action="UPDATE_ACCOUNT").change_summary)
+
+    def test_saving_without_changes_writes_nothing(self):
+        self.edit(self.guard)
+        self.assertFalse(AuditLog.objects.filter(action="UPDATE_ACCOUNT").exists())
+        self.assertFalse(self.Notification.objects.exists())
+
+    # ---- deactivate / reactivate
+    def test_deactivate_blocks_login_with_clear_message_and_reactivate_restores(self):
+        resp = self.status(self.resident, "deactivate", "Moved out")
+        self.assertRedirects(resp, reverse("approvals:account_edit", args=[self.resident.pk]), fetch_redirect_response=False)
+        self.resident.refresh_from_db()
+        self.assertFalse(self.resident.is_active)
+        self.assertEqual(self.resident.profile.approval_status, "APPROVED")  # not a pending registration
+        self.assertIn("Reason: Moved out.", AuditLog.objects.get(action="DEACTIVATE_ACCOUNT").change_summary)
+        self.assertContains(self.client.get(reverse("approvals:account_edit", args=[self.resident.pk])), "Deactivated.")
+
+        self.client.logout()
+        page = self.client.post(reverse("login:login"), {"username": "rita", "password": "RitaPass!2026"})
+        self.assertContains(page, "This account has been deactivated")
+        self.assertNotContains(self.client.post(reverse("login:login"), {"username": "rita", "password": "wrong"}),
+                               "deactivated")  # no hint without the right password
+
+        self.client.force_login(self.admin)
+        self.status(self.resident, "reactivate")
+        self.resident.refresh_from_db()
+        self.assertTrue(self.resident.is_active)
+        self.assertTrue(AuditLog.objects.filter(action="REACTIVATE_ACCOUNT").exists())
+        self.assertEqual(self.Notification.objects.get(recipient=self.resident).title, "Account reactivated")
+        self.client.logout()
+        resp = self.client.post(reverse("login:login"), {"username": "rita", "password": "RitaPass!2026"})
+        self.assertEqual(resp.status_code, 302)
+
+    def test_deactivated_user_is_signed_out(self):
+        other = self.client_class()
+        other.force_login(self.guard)
+        self.assertEqual(other.get(reverse("guard:search")).status_code, 200)
+        self.status(self.guard, "deactivate")
+        self.assertEqual(other.get(reverse("guard:search")).status_code, 302)
+
+    def test_cannot_deactivate_self_or_last_admin(self):
+        self.status(self.admin, "deactivate")
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+        self.assertContains(self.client.get(reverse("approvals:account_edit", args=[self.admin.pk])),
+                            "You cannot deactivate your own account")
+
+        second = User.objects.create_user("boss2", password="x", is_staff=True)
+        UserProfile.objects.create(user=second, role="ADMIN", approval_status="APPROVED")
+        self.status(second, "deactivate")  # fine: boss is still active
+        second.refresh_from_db()
+        self.assertFalse(second.is_active)
+
+        from apps.approvals.accounts import AccountError, set_active
+        with self.assertRaisesMessage(AccountError, "At least one administrator"):
+            set_active(second, self.admin, False)
+
+    def test_repeating_an_action_is_refused(self):
+        self.status(self.guard, "reactivate")
+        self.assertFalse(AuditLog.objects.filter(action="REACTIVATE_ACCOUNT").exists())

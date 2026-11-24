@@ -30,6 +30,8 @@ def _pending_message(identifier, password):
     if profile.approval_status == UserProfile.ApprovalStatus.DISAPPROVED:
         reason = f" Reason: {profile.disapproval_reason.rstrip('. ')}." if profile.disapproval_reason else ""
         return "Your registration was not approved." + reason + " Please contact the building administrator."
+    if profile.approval_status == UserProfile.ApprovalStatus.APPROVED:
+        return "This account has been deactivated. Please contact the building administrator."
     return None
 
 

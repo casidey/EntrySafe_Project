@@ -148,21 +148,84 @@ def create_staff_account(admin, data, request=None):
 
 @_guard
 def accounts_view(request):
-    ctx = {"roles": STAFF_ROLES, "form": {"role": "GUARD"}}
+    from .accounts import display_name
+
+    tab = request.GET.get("tab", "staff")
+    if tab not in ("staff", "residents"):
+        tab = "staff"
+    ctx = {"roles": STAFF_ROLES, "form": {"role": "GUARD"}, "tab": tab}
     if request.method == "POST":
         user, form, error = create_staff_account(request.user, request.POST, request=request)
         if user is not None:
             messages.success(request, f"{STAFF_ROLES[form['role']]} account {user.username} was created. They can sign in now.")
             return redirect("approvals:accounts")
-        ctx.update(form=form, error=error)
+        ctx.update(form=form, error=error, tab="staff")
+    staff = list(_staff_accounts())
+    residents = list(User.objects.filter(is_staff=False, profile__role=UserProfile.Role.RESIDENT,
+                                         profile__approval_status=UserProfile.ApprovalStatus.APPROVED)
+                     .select_related("profile").order_by("-is_active", "profile__unit_number", "username"))
     rows = []
-    for u in _staff_accounts():
+    for u in (staff if ctx["tab"] == "staff" else residents):
         p = getattr(u, "profile", None)
-        rows.append({"user": u, "name": (p.full_name if p and p.full_name else u.get_full_name()) or u.username,
-                     "role": "Administrator" if u.is_staff else "Guard",
-                     "contact": p.contact_number if p else ""})
-    ctx["accounts"] = rows
+        rows.append({"user": u, "name": display_name(u),
+                     "role": "Administrator" if u.is_staff else ("Guard" if ctx["tab"] == "staff" else "Resident"),
+                     "contact": p.contact_number if p else "", "unit": p.unit_number if p else "",
+                     "is_me": u == request.user})
+    ctx.update(accounts=rows, counts={"staff": len(staff), "residents": len(residents)},
+               inactive={"staff": sum(not u.is_active for u in staff),
+                         "residents": sum(not u.is_active for u in residents)})
     return render(request, "approvals/accounts.html", ctx)
+
+
+def _managed_user(pk):
+    from .accounts import role_of
+
+    user = get_object_or_404(User.objects.select_related("profile"), pk=pk)
+    if role_of(user) is None:
+        raise Http404("Not a managed account")
+    return user
+
+
+@_guard
+def account_edit_view(request, pk):
+    """Edit an account's details, set a new password, and deactivate or reactivate it."""
+    from .accounts import ROLE_LABELS, display_name, role_of, update_account
+
+    user = _managed_user(pk)
+    role = role_of(user)
+    profile = UserProfile.for_user(user)
+    form = {"full_name": profile.full_name or user.get_full_name(), "email": user.email,
+            "contact_number": profile.contact_number, "unit_number": profile.unit_number}
+    error = None
+    if request.method == "POST":
+        form, error = update_account(request.user, user, request.POST, request=request)
+        if error is None:
+            messages.success(request, f"Saved {display_name(user)}'s account.")
+            return redirect("approvals:account_edit", pk=user.pk)
+    back = reverse("approvals:accounts") + ("?tab=residents" if role == "RESIDENT" else "")
+    return render(request, "approvals/account_edit.html", {
+        "target": user, "role": role, "role_label": ROLE_LABELS[role], "form": form, "error": error,
+        "name": display_name(user), "is_me": user == request.user, "back": back,
+        "history": AuditLog.objects.filter(target_entity="UserProfile", target_id=profile.pk)
+        .select_related("user__profile")[:10],
+    })
+
+
+@_guard
+@require_POST
+def account_status_view(request, pk):
+    from .accounts import AccountError, display_name, set_active
+
+    user = _managed_user(pk)
+    active = request.POST.get("action") == "reactivate"
+    try:
+        set_active(request.user, user, active, request.POST.get("reason", ""), request=request)
+    except AccountError as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, f"{display_name(user)} was {'reactivated' if active else 'deactivated'}."
+                         + ("" if active else " They can no longer sign in."))
+    return redirect("approvals:account_edit", pk=user.pk)
 
 
 @_guard

@@ -1,0 +1,65 @@
+{% extends "shell.html" %}
+{% block title %}{{ name }} — Accounts — EntrySafe{% endblock %}
+{% block page_title %}{{ name }}{% endblock %}
+{% block page_sub %}{{ role_label }} account &middot; {{ target.username }}{% if not target.is_active %} &middot; deactivated{% endif %}{% endblock %}
+{% block content %}
+{% if not target.is_active %}
+<div class="alert" role="status" style="margin-bottom:18px"><svg><use href="#i-alert"/></svg><span><b>Deactivated.</b> This person cannot sign in. Their records and history are kept.</span></div>
+{% endif %}
+
+<form method="post" action="{% url 'approvals:account_edit' target.pk %}" novalidate autocomplete="off">
+  {% csrf_token %}
+  <div class="section">
+    <div class="section-h"><div><h2>Details</h2><p>{% if is_me %}This is your own account.{% else %}The person is notified when you save changes.{% endif %}</p></div></div>
+    {% if error %}<div class="alert" role="alert" style="margin:0 0 14px"><svg><use href="#i-alert"/></svg><span>{{ error }}</span></div>{% endif %}
+    <div class="setrow"><div class="lab"><b>Full name</b><span>Shown in the app{% if role == 'GUARD' %} and on gate logs{% endif %}.</span></div>
+      <div class="val"><input class="inp" name="full_name" value="{{ form.full_name }}" aria-label="Full name" maxlength="150" required style="max-width:420px"></div></div>
+    {% if role == 'RESIDENT' %}
+    <div class="setrow"><div class="lab"><b>Tower and unit</b><span>e.g. Tower 2, Unit 1408.</span></div>
+      <div class="val"><input class="inp" name="unit_number" value="{{ form.unit_number }}" aria-label="Tower and unit" maxlength="60" required style="max-width:420px"></div></div>
+    {% endif %}
+    <div class="setrow"><div class="lab"><b>Email</b><span>Can also be used to sign in.</span></div>
+      <div class="val"><input class="inp" type="email" name="email" value="{{ form.email }}" aria-label="Email" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Contact number</b><span>Optional.</span></div>
+      <div class="val"><input class="inp" name="contact_number" value="{{ form.contact_number }}" aria-label="Contact number" maxlength="40" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>New password</b><span>Leave blank to keep the current one. Use this when someone forgets theirs; give it to them in person.</span></div>
+      <div class="val"><input class="inp" type="password" name="new_password" aria-label="New password" autocomplete="new-password" style="max-width:420px"></div></div>
+  </div>
+  <div class="actions-bar" style="max-width:700px">
+    <a class="btn btn-s btn-sm" href="{{ back }}">Back</a>
+    <button class="btn btn-p btn-sm" type="submit">Save changes</button>
+  </div>
+</form>
+
+<div class="section" style="margin-top:28px">
+  <div class="section-h"><div><h2>Access</h2>
+    <p>{% if target.is_active %}Deactivating stops this person from signing in right away. Nothing is deleted, and you can reactivate them later.{% else %}Reactivating lets this person sign in again with their current password.{% endif %}</p></div></div>
+  {% if is_me %}
+    <div class="empty">You cannot deactivate your own account.</div>
+  {% elif target.is_active %}
+    <form class="inline-form" method="post" action="{% url 'approvals:account_status' target.pk %}"
+          data-confirm-title="Deactivate {{ name }}?" data-confirm-sub="They will be signed out and cannot sign in until you reactivate them." data-confirm-action="Deactivate" data-confirm-reason="Reason (optional), e.g. moved out" data-confirm-warn>
+      {% csrf_token %}<input type="hidden" name="action" value="deactivate"><input type="hidden" name="reason" value="">
+      <button class="btn btn-danger btn-sm" type="submit">Deactivate account</button>
+    </form>
+  {% else %}
+    <form class="inline-form" method="post" action="{% url 'approvals:account_status' target.pk %}"
+          data-confirm-title="Reactivate {{ name }}?" data-confirm-sub="They will be able to sign in again." data-confirm-action="Reactivate">
+      {% csrf_token %}<input type="hidden" name="action" value="reactivate">
+      <button class="btn btn-p btn-sm" type="submit">Reactivate account</button>
+    </form>
+  {% endif %}
+</div>
+
+{% if history %}
+<div class="section" style="margin-top:28px">
+  <div class="section-h"><div><h2>History</h2><p>Recent changes to this account.</p></div></div>
+  {% for h in history %}
+  <div class="list-row">
+    <div class="ico"><svg><use href="#i-doc"/></svg></div>
+    <div class="main2"><b>{{ h.change_summary|default:h.get_action_display }}</b><span>{{ h.user.profile.full_name|default:h.user.username|default:"System" }} &middot; {{ h.timestamp|date:"M d, Y g:i A" }}</span></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

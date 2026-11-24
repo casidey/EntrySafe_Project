@@ -1,8 +1,14 @@
 {% extends "shell.html" %}
 {% block title %}Accounts — EntrySafe{% endblock %}
 {% block page_title %}Accounts{% endblock %}
-{% block page_sub %}Create guard and administrator accounts. These roles cannot sign up on their own.{% endblock %}
+{% block page_sub %}Create, edit and deactivate accounts. Guards and administrators cannot sign up on their own.{% endblock %}
 {% block content %}
+<div class="tablist2">
+  <a class="tab2" href="?tab=staff" {% if tab == 'staff' %}aria-current="true"{% endif %}>Guards and administrators<span class="n">{{ counts.staff }}</span></a>
+  <a class="tab2" href="?tab=residents" {% if tab == 'residents' %}aria-current="true"{% endif %}>Residents<span class="n">{{ counts.residents }}</span></a>
+</div>
+
+{% if tab == 'staff' %}
 <form method="post" action="{% url 'approvals:accounts' %}" novalidate autocomplete="off">
   {% csrf_token %}
   <div class="section">
@@ -26,14 +32,19 @@
   <div class="actions-bar" style="max-width:700px"><button class="btn btn-p btn-sm" type="submit">Create account</button></div>
 </form>
 
-<div class="section" style="margin-top:28px">
-  <div class="section-h"><div><h2>Guards and administrators</h2><p>Everyone who can use the gate or admin screens.</p></div></div>
+{% endif %}
+
+<div class="section" style="margin-top:{% if tab == 'staff' %}28px{% else %}8px{% endif %}">
+  <div class="section-h"><div>
+    <h2>{% if tab == 'staff' %}Guards and administrators{% else %}Residents{% endif %}</h2>
+    <p>{% if tab == 'staff' %}Everyone who can use the gate or admin screens.{% else %}Approved residents. Deactivate a resident who moves out; their history is kept.{% endif %}</p>
+  </div></div>
   {% for a in accounts %}
   <div class="list-row">
     <div class="ico"><svg><use href="#i-{% if a.role == 'Guard' %}shield{% else %}user{% endif %}"/></svg></div>
-    <div class="main2"><b>{{ a.name }}</b><span>{{ a.user.username }}{% if a.user.email %} &middot; {{ a.user.email }}{% endif %}{% if a.contact %} &middot; {{ a.contact }}{% endif %} &middot; added {{ a.user.date_joined|date:"M d, Y" }}</span></div>
-    <div class="actions">{% if not a.user.is_active %}<span class="pill red">Inactive</span>{% endif %}<span class="pill {% if a.role == 'Guard' %}green{% endif %}">{{ a.role }}</span></div>
+    <div class="main2"><b>{{ a.name }}{% if a.is_me %} <span style="font-weight:500;color:var(--mute);font-size:12.5px">(you)</span>{% endif %}</b><span>{% if a.unit %}{{ a.unit }} &middot; {% endif %}{{ a.user.username }}{% if a.user.email and a.user.email != a.user.username %} &middot; {{ a.user.email }}{% endif %}{% if a.contact %} &middot; {{ a.contact }}{% endif %} &middot; added {{ a.user.date_joined|date:"M d, Y" }}</span></div>
+    <div class="actions">{% if not a.user.is_active %}<span class="pill red">Deactivated</span>{% endif %}{% if tab == 'staff' %}<span class="pill {% if a.role == 'Guard' %}green{% endif %}">{{ a.role }}</span>{% endif %}<a class="btn btn-s btn-sm" href="{% url 'approvals:account_edit' a.user.pk %}">Edit</a></div>
   </div>
-  {% empty %}<div class="empty">No guard or administrator accounts yet.</div>{% endfor %}
+  {% empty %}<div class="empty">{% if tab == 'staff' %}No guard or administrator accounts yet.{% else %}No approved residents yet.{% endif %}</div>{% endfor %}
 </div>
 {% endblock %}
