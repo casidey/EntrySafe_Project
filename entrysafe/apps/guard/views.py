@@ -68,6 +68,20 @@ def search_vehicles(query):
         plate_key__contains=key)
 
 
+def _resident_vehicles(query):
+    """Residents' own registered vehicles that match the searched plate, so the guard can recognise them."""
+    from apps.profile.services import resident_vehicles_matching
+
+    rows = []
+    for v in resident_vehicles_matching(query)[:5]:
+        p = getattr(v.resident, "profile", None)
+        rows.append({"plate": v.license_plate,
+                     "detail": " · ".join(b for b in [v.get_vehicle_type_display(), v.make_model, v.color] if b),
+                     "owner": (p.full_name if p and p.full_name else v.resident.get_username()),
+                     "unit": p.unit_number if p else ""})
+    return rows
+
+
 def _card(kind, obj):
     if kind == services.PERSON:
         detail = " · ".join(b for b in [obj.alias_nickname and f'Also known as "{obj.alias_nickname}"'] if b)
@@ -98,6 +112,7 @@ def search_view(request):
         "gates": Log.GateLocation.choices, "actions": Log.ActionTaken.choices,
         "gate": request.session.get("gate_location", Log.GateLocation.MAIN_GATE),
         "clear_kind": guess_kind(query) if searched else services.PERSON,
+        "resident_vehicles": _resident_vehicles(query) if searched else [],
     })
 
 

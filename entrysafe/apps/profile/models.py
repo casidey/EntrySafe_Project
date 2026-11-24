@@ -38,6 +38,10 @@ class UserProfile(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     disapproval_reason = models.TextField(blank=True)
+    # added 2026-11-24 (approved by the user): who to call if something happens to the resident/staff member
+    emergency_contact_name = models.CharField(max_length=150, blank=True)
+    emergency_contact_relationship = models.CharField(max_length=60, blank=True)  # e.g. Mother, Spouse
+    emergency_contact_number = models.CharField(max_length=40, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)  # registration submission timestamp
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -115,3 +119,25 @@ class UserProfile(models.Model):
             recipient=p.user, title="Account not approved",
             message=p.disapproval_reason or "The administrator did not approve your registration.",
             notification_type=Notification.Type.ACCOUNT_STATUS, target_entity="UserProfile", target_id=p.pk)
+
+
+class ResidentVehicle(models.Model):
+    """A vehicle that belongs to a resident (added 2026-11-24, approved by the user).
+    Residents list their own cars on their profile so guards can recognise them at the gate."""
+
+    VEHICLE_TYPES = [("SEDAN", "Sedan"), ("SUV", "SUV"), ("MOTORCYCLE", "Motorcycle"), ("VAN", "Van"), ("TRUCK", "Truck")]
+    MAX_PER_RESIDENT = 5
+
+    resident = models.ForeignKey(User, on_delete=models.CASCADE, related_name="vehicles")
+    license_plate = models.CharField(max_length=20)
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPES)
+    make_model = models.CharField(max_length=100, blank=True)  # e.g. Toyota Vios
+    color = models.CharField(max_length=40, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "resident_vehicle"
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.license_plate} ({self.resident.username})"

@@ -14,6 +14,9 @@
   </div>
 </form>
 
+{% for v in resident_vehicles %}
+  <div class="alert info" role="status" style="margin-bottom:10px"><svg><use href="#i-user"/></svg><span><b>Resident vehicle:</b> {{ v.plate }}{% if v.detail %} &middot; {{ v.detail }}{% endif %} &middot; registered to {{ v.owner }}{% if v.unit %} ({{ v.unit }}){% endif %}.</span></div>
+{% endfor %}
 {% if too_short %}
   <div class="alert" role="status"><svg><use href="#i-alert"/></svg><span>Type at least 2 characters to search.</span></div>
 {% elif searched and results %}

@@ -357,3 +357,13 @@ a.side-item, a.rail-item, a.mob-item, a.btn, a.tab2, a.iconbtn { text-decoration
 .note-row:not(.unread) .main2 b { font-weight: 500; color: var(--mute); }
 .link-row { text-decoration: none; color: inherit; }
 .link-row:hover { background: var(--surface2); }
+/* neutral info banner (e.g. a resident's own vehicle at Gate check) and the profile overview */
+.alert.info { background: var(--surface2); color: var(--ink); border-color: var(--line2); }
+.alert.info svg { color: var(--acc); }
+.kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px 24px; padding: 6px 0 4px; }
+.kv-grid div { display: flex; flex-direction: column; gap: 3px; }
+.kv-grid span { font-size: 12.5px; color: var(--mute); }
+.kv-grid b { font-size: 14px; font-weight: 600; }
+.vehicle-add { display: grid; grid-template-columns: minmax(120px, 150px) minmax(120px, 150px) 1fr minmax(100px, 140px) auto; gap: 8px; align-items: center; margin-top: 12px; }
+.vehicle-add .inp { padding: 8px 10px; font-size: 13.5px; border-radius: 9px; }
+@media (max-width: 800px) { .vehicle-add { grid-template-columns: 1fr; } }

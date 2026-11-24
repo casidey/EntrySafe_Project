@@ -18,6 +18,10 @@ class AuditLog(models.Model):
         UPDATE_ACCOUNT = "UPDATE_ACCOUNT", "Update account"
         DEACTIVATE_ACCOUNT = "DEACTIVATE_ACCOUNT", "Deactivate account"
         REACTIVATE_ACCOUNT = "REACTIVATE_ACCOUNT", "Reactivate account"
+        UPDATE_PROFILE = "UPDATE_PROFILE", "Update profile"
+        CHANGE_PASSWORD = "CHANGE_PASSWORD", "Change password"
+        ADD_VEHICLE = "ADD_VEHICLE", "Add own vehicle"
+        REMOVE_VEHICLE = "REMOVE_VEHICLE", "Remove own vehicle"
 
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="audit_logs")
     action = models.CharField(max_length=30, choices=Action.choices)

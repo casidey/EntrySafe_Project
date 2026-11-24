@@ -1,20 +1,92 @@
 {% extends "shell.html" %}
 {% block title %}Profile — EntrySafe{% endblock %}
 {% block page_title %}Profile{% endblock %}
-{% block page_sub %}Your name and contact details.{% endblock %}
+{% block page_sub %}Your account, contact details{% if is_resident %}, vehicles{% endif %} and recent activity.{% endblock %}
 {% block content %}
-<form method="post" action="{% url 'profile:profile' %}">
+<div class="section">
+  <div class="section-h"><div><h2>Account</h2><p>Managed by the building administrator.</p></div></div>
+  <div class="kv-grid">
+    <div><span>Role</span><b>{{ role_label }}</b></div>
+    <div><span>Username</span><b>{{ user.username }}</b></div>
+    {% if profile.unit_number %}<div><span>Tower and unit</span><b>{{ profile.unit_number }}</b></div>{% endif %}
+    <div><span>Email</span><b>{{ user.email|default:"Not set" }}</b></div>
+    <div><span>Member since</span><b>{{ user.date_joined|date:"M d, Y" }}</b></div>
+    <div><span>Last sign-in</span><b>{{ user.last_login|date:"M d, Y g:i A"|default:"—" }}</b></div>
+    {% if is_resident %}
+    <div><span>Reference</span><b>{{ profile.reference }}</b></div>
+    <div><span>Approved</span><b>{% if profile.reviewed_at %}{{ profile.reviewed_at|date:"M d, Y" }}{% if reviewer_name %} by {{ reviewer_name }}{% endif %}{% else %}—{% endif %}</b></div>
+    {% endif %}
+  </div>
+</div>
+
+<form method="post" action="{% url 'profile:profile' %}" novalidate style="margin-top:28px">
   {% csrf_token %}
   <div class="section">
-    <div class="setrow"><div class="lab"><b>Full name</b><span>Shown to the administrator.</span></div>
-      <div class="val"><input class="inp" name="full_name" value="{{ profile.full_name }}" aria-label="Full name" style="max-width:420px"></div></div>
+    <div class="section-h"><div><h2>Contact details</h2><p>Your unit and email are changed by the administrator.</p></div></div>
+    {% if error %}<div class="alert" role="alert" style="margin:0 0 14px"><svg><use href="#i-alert"/></svg><span>{{ error }}</span></div>{% endif %}
+    <div class="setrow"><div class="lab"><b>Full name</b><span>Shown to the administrator{% if not is_resident %} and on gate logs{% endif %}.</span></div>
+      <div class="val"><input class="inp" name="full_name" value="{{ form.full_name }}" aria-label="Full name" maxlength="150" style="max-width:420px"></div></div>
     <div class="setrow"><div class="lab"><b>Contact number</b><span>Used if the gate team needs to reach you.</span></div>
-      <div class="val"><input class="inp" name="contact_number" value="{{ profile.contact_number }}" aria-label="Contact number" style="max-width:420px"></div></div>
-    <div class="setrow"><div class="lab"><b>Email</b><span>Set when you registered.</span></div>
-      <div class="val"><input class="inp" value="{{ user.email }}" aria-label="Email" readonly style="max-width:420px"></div></div>
-    {% if profile.unit_number %}<div class="setrow"><div class="lab"><b>Unit</b><span>Changes go through the administrator.</span></div>
-      <div class="val"><b>{{ profile.unit_number }}</b></div></div>{% endif %}
+      <div class="val"><input class="inp" name="contact_number" value="{{ form.contact_number }}" aria-label="Contact number" maxlength="40" inputmode="tel" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Emergency contact</b><span>Who to call if something happens to you. Optional.</span></div>
+      <div class="val" style="display:grid;gap:8px;max-width:420px">
+        <input class="inp" name="emergency_contact_name" value="{{ form.emergency_contact_name }}" aria-label="Emergency contact name" placeholder="Name" maxlength="150">
+        <input class="inp" name="emergency_contact_relationship" value="{{ form.emergency_contact_relationship }}" aria-label="Relationship" placeholder="Relationship, e.g. Mother" maxlength="60">
+        <input class="inp" name="emergency_contact_number" value="{{ form.emergency_contact_number }}" aria-label="Emergency contact number" placeholder="Number" maxlength="40" inputmode="tel">
+      </div></div>
   </div>
-  <div class="actions-bar" style="max-width:560px"><button class="btn btn-p btn-sm" type="submit">Save changes</button></div>
+  <div class="actions-bar" style="max-width:700px"><button class="btn btn-p btn-sm" type="submit">Save changes</button></div>
 </form>
+
+{% if is_resident %}
+<div class="section" style="margin-top:28px">
+  <div class="section-h"><div><h2>My vehicles</h2><p>Register your own cars so the guards recognise them at the gate. Up to {{ max_vehicles }}.</p></div></div>
+  {% for v in vehicles %}
+  <div class="list-row">
+    <div class="ico"><svg><use href="#i-list"/></svg></div>
+    <div class="main2"><b>{{ v.license_plate }}</b><span>{{ v.get_vehicle_type_display }}{% if v.make_model %} &middot; {{ v.make_model }}{% endif %}{% if v.color %} &middot; {{ v.color }}{% endif %}</span></div>
+    <div class="actions"><form class="inline-form" method="post" action="{% url 'profile:vehicle_remove' v.pk %}" data-confirm-title="Remove {{ v.license_plate }}?" data-confirm-sub="Guards will no longer see it as your vehicle." data-confirm-action="Remove" data-confirm-warn>{% csrf_token %}<button class="btn btn-danger btn-sm" type="submit">Remove</button></form></div>
+  </div>
+  {% empty %}<div class="empty">No vehicles registered yet.</div>{% endfor %}
+  {% if vehicle_error %}<div class="alert" role="alert" style="margin:12px 0 0"><svg><use href="#i-alert"/></svg><span>{{ vehicle_error }}</span></div>{% endif %}
+  {% if vehicles|length < max_vehicles %}
+  <form method="post" action="{% url 'profile:vehicle_add' %}" novalidate aria-label="Add a vehicle">
+    {% csrf_token %}
+    <div class="vehicle-add">
+      <input class="inp" name="license_plate" value="{{ vehicle_form.license_plate|default:'' }}" placeholder="Plate, e.g. NBX 4471" aria-label="Plate number" maxlength="20" style="text-transform:uppercase">
+      <select class="inp" name="vehicle_type" aria-label="Vehicle type">{% for value, text in vehicle_types %}<option value="{{ value }}"{% if vehicle_form.vehicle_type == value %} selected{% endif %}>{{ text }}</option>{% endfor %}</select>
+      <input class="inp" name="make_model" value="{{ vehicle_form.make_model|default:'' }}" placeholder="Make and model (optional)" aria-label="Make and model" maxlength="100">
+      <input class="inp" name="color" value="{{ vehicle_form.color|default:'' }}" placeholder="Color (optional)" aria-label="Color" maxlength="40">
+      <button class="btn btn-p btn-sm" type="submit">Add</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
+<form method="post" action="{% url 'profile:password' %}" novalidate autocomplete="off" style="margin-top:28px">
+  {% csrf_token %}
+  <div class="section">
+    <div class="section-h"><div><h2>Change password</h2><p>You stay signed in here; other devices are signed out.</p></div></div>
+    {% if password_errors %}<div class="alert" role="alert" style="margin:0 0 14px"><svg><use href="#i-alert"/></svg><span>{{ password_errors|join:" " }}</span></div>{% endif %}
+    <div class="setrow"><div class="lab"><b>Current password</b></div>
+      <div class="val"><input class="inp" type="password" name="old_password" aria-label="Current password" autocomplete="current-password" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>New password</b><span>At least 8 characters; avoid common or all-number passwords.</span></div>
+      <div class="val"><input class="inp" type="password" name="new_password1" aria-label="New password" autocomplete="new-password" style="max-width:420px"></div></div>
+    <div class="setrow"><div class="lab"><b>Confirm new password</b></div>
+      <div class="val"><input class="inp" type="password" name="new_password2" aria-label="Confirm new password" autocomplete="new-password" style="max-width:420px"></div></div>
+  </div>
+  <div class="actions-bar" style="max-width:700px"><button class="btn btn-p btn-sm" type="submit">Change password</button></div>
+</form>
+
+<div class="section" style="margin-top:28px">
+  <div class="section-h"><div><h2>Recent activity</h2><p>The last things you did in EntrySafe.</p></div></div>
+  {% for a in activity %}
+  <div class="list-row">
+    <div class="ico"><svg><use href="#i-doc"/></svg></div>
+    <div class="main2"><b>{{ a.change_summary|default:a.get_action_display }}</b><span>{{ a.timestamp|date:"M d, Y g:i A" }}</span></div>
+    <div class="actions"><span class="pill">{{ a.get_action_display }}</span></div>
+  </div>
+  {% empty %}<div class="empty">No activity yet.</div>{% endfor %}
+</div>
 {% endblock %}
