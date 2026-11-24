@@ -133,7 +133,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+# Times are stored in UTC (USE_TZ) and shown in Philippine time; "today" for expiry checks uses this zone too.
+TIME_ZONE = "Asia/Manila"
 
 USE_I18N = True
 

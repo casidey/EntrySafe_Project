@@ -370,3 +370,24 @@ class AccountManagementTests(TestCase):
     def test_repeating_an_action_is_refused(self):
         self.status(self.guard, "reactivate")
         self.assertFalse(AuditLog.objects.filter(action="REACTIVATE_ACCOUNT").exists())
+
+
+class LocalTimeTests(TestCase):
+    def test_times_are_shown_in_philippine_time(self):
+        import datetime
+
+        from django.conf import settings
+        from django.utils import timezone
+
+        self.assertEqual(settings.TIME_ZONE, "Asia/Manila")
+        admin = User.objects.create_user("boss", password="x", is_staff=True)
+        log = AuditLog.record(admin, AuditLog.Action.CREATE_ACCOUNT, "UserProfile", 1, "Created guard account g.")
+        # 08:00 UTC is 4:00 PM in Manila (UTC+8, no daylight saving)
+        AuditLog.objects.filter(pk=log.pk).update(
+            timestamp=datetime.datetime(2026, 11, 24, 8, 0, tzinfo=datetime.timezone.utc))
+        self.client.force_login(admin)
+        page = self.client.get(reverse("approvals:audit"))
+        self.assertContains(page, "Nov 24, 2026 4:00 PM")
+        self.assertNotContains(page, "8:00 AM")
+        with timezone.override("UTC"):  # sanity check that the stored value is really UTC
+            self.assertEqual(timezone.localtime(AuditLog.objects.get(pk=log.pk).timestamp).hour, 8)
