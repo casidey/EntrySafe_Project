@@ -26,6 +26,7 @@ def _nav(user):
             ("restrictions:queue", "Requests", "list", "restrictions", "queue"),
             ("restrictions:restricted", "Restricted list", "shield", "restrictions", "restricted"),
             ("guard:log", "Gate log", "eye", "guard", "log"),
+            ("guard:flagged", "Flagged at gate", "alert", "guard", "flagged"),
             ("approvals:accounts", "Accounts", "user", "approvals", "accounts"),
             ("approvals:audit", "Audit log", "doc", "approvals", "audit"),
         ]

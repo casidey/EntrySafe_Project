@@ -1,15 +1,18 @@
 import io
+from io import StringIO
 import shutil
 import tempfile
 from datetime import timedelta
 
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.audit.models import AuditLog
+from apps.guard import queries
 from apps.guard.models import GuardVerificationLog
 from apps.guard.views import plate_key
 from apps.notifications.models import Notification
@@ -328,3 +331,88 @@ class GateRecordTests(TestCase):
         for user in (self.guard, self.resident):
             self.client.force_login(user)
             self.assertEqual(self.client.get(reverse("guard:log")).status_code, 302)
+
+
+class JoinAndSubqueryTests(TestCase):
+    """JOIN (gate log) and SUBQUERY (flagged at gate) from apps/guard/queries.py."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user("boss", password="x", is_staff=True)
+        self.resident = User.objects.create_user("res", password="x")
+        UserProfile.objects.create(user=self.resident, full_name="Rita", approval_status="APPROVED")
+        self.guard = User.objects.create_user("gate", password="x")
+        UserProfile.objects.create(user=self.guard, role="GUARD", full_name="Gerry Gate", approval_status="APPROVED")
+        self.url = reverse("guard:flagged")
+
+    def restrict(self, kind, **data):
+        req, _, err = services.submit(kind, self.resident, {**data, "reason": "Trespassing"}, consent=True)
+        self.assertIsNone(err)
+        return services.approve_request(kind, req.pk, self.admin)
+
+    def record(self, q, kind, pk=None, action="DENIED_ENTRY"):
+        self.client.force_login(self.guard)
+        data = {"q": q, "kind": kind, "gate_location": "MAIN_GATE", "action_taken": action, "guard_notes": ""}
+        if pk:
+            data["pk"] = pk
+        self.client.post(reverse("guard:record"), data)
+
+    def test_join_returns_guard_and_match_in_one_query(self):
+        person = self.restrict("person", first_name="Ramon", last_name="Villanueva")
+        self.record("villanueva", "person", person.pk)
+        self.record("Santos", "person")
+        sql = str(queries.gate_log_entries().query)
+        for table in ("auth_user", "user_profile", "restricted_person", "restricted_vehicle"):
+            self.assertIn(f'JOIN "{table}"', sql)
+        with self.assertNumQueries(1):
+            rows = [(x.guard.profile.full_name, x.matched_person and x.matched_person.last_name)
+                    for x in queries.gate_log_entries()]
+        self.assertEqual(sorted(rows, key=str), sorted([("Gerry Gate", "Villanueva"), ("Gerry Gate", None)], key=str))
+
+    def test_subquery_lists_only_restrictions_matched_at_the_gate(self):
+        seen = self.restrict("person", first_name="Ramon", last_name="Villanueva")
+        self.restrict("person", first_name="Never", last_name="Seen")
+        car = self.restrict("vehicle", license_plate="NBX 4471", vehicle_type="SUV")
+        self.restrict("vehicle", license_plate="ABC 1234", vehicle_type="SEDAN")
+        self.record("villanueva", "person", seen.pk)
+        self.record("villanueva", "person", seen.pk, action="ESCALATED_TO_ADMIN")
+        self.record("nbx4471", "vehicle", car.pk)
+        self.record("Seen Never", "person")  # clear check: not a match, so it does not count
+        self.assertIn("IN (SELECT", str(queries.flagged_people().query))
+        self.assertEqual(list(queries.flagged_people()), [seen])
+        self.assertEqual(list(queries.flagged_vehicles()), [car])
+
+        self.client.force_login(self.admin)
+        page = self.client.get(self.url)
+        self.assertEqual(page.context["counts"], {"all": 2, "person": 1, "vehicle": 1})
+        row = next(x for x in page.context["items"] if x["obj"] == seen)
+        self.assertEqual((row["attempts"], row["denied"]), (2, 1))
+        self.assertContains(page, "Matched 2 times, denied entry 1 time")
+        self.assertNotContains(page, "Never Seen")
+        self.assertNotContains(page, "ABC 1234")
+        self.assertContains(page, self.url)  # nav item
+        only = self.client.get(self.url, {"kind": "vehicle"})
+        self.assertEqual([x["obj"] for x in only.context["items"]], [car])
+
+    def test_ended_restriction_stays_on_the_list_with_its_status(self):
+        person = self.restrict("person", first_name="Ramon", last_name="Villanueva")
+        self.record("villanueva", "person", person.pk)
+        RestrictedPerson.objects.filter(pk=person.pk).update(status="REVOKED")
+        self.client.force_login(self.admin)
+        page = self.client.get(self.url)
+        self.assertContains(page, "Ramon Villanueva")
+        self.assertContains(page, "Revoked")
+
+    def test_flagged_page_is_admin_only(self):
+        self.assertIn(reverse("login:login"), self.client.get(self.url)["Location"])
+        for user in (self.guard, self.resident):
+            self.client.force_login(user)
+            self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_show_sql_command_prints_join_and_subquery(self):
+        out = StringIO()
+        call_command("show_sql", stdout=out)
+        text = out.getvalue()
+        self.assertIn("INNER JOIN", text)
+        self.assertIn("LEFT OUTER JOIN", text)
+        self.assertRegex(text.split("SUBQUERY")[1], r"IN\s*\(SELECT")
+

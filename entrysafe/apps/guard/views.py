@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.paginator import Paginator
-from django.db.models import Q, Value
+from django.db.models import Count, Max, Q, Value
 from django.db.models.functions import Replace, Upper
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -18,6 +18,7 @@ from apps.profile.models import UserProfile
 from apps.restrictions import services
 from apps.restrictions.models import RestrictedPerson, RestrictedVehicle, RestrictionStatus
 
+from . import queries
 from .models import GuardVerificationLog as Log
 
 MIN_QUERY = 2
@@ -159,7 +160,8 @@ def _log_row(log):
 
 
 def _logs():
-    return Log.objects.select_related("guard__profile", "matched_person", "matched_vehicle")
+    """JOIN: gate checks with their guard and matched restriction (see queries.gate_log_entries)."""
+    return queries.gate_log_entries()
 
 
 @guard_required
@@ -203,4 +205,40 @@ def verification_log_view(request):
         "items": [_log_row(x) for x in page], "page": page, "counts": counts, "result": result,
         "action": action, "gate": gate, "actions": Log.ActionTaken.choices, "gates": Log.GateLocation.choices,
         "filter_qs": urlencode(keep), "page_qs": urlencode({**keep, "result": result}),
+    })
+
+
+def _attempts(field):
+    """Restricted-match count and latest time per restriction id, from one grouped query."""
+    rows = (Log.objects.filter(match_result=Log.MatchResult.RESTRICTED_MATCH, **{f"{field}__isnull": False})
+            .values(field).annotate(total=Count("id"), last=Max("verified_at"),
+                                    denied=Count("id", filter=Q(action_taken=Log.ActionTaken.DENIED_ENTRY))))
+    return {r[field]: r for r in rows}
+
+
+@admin_required
+def flagged_view(request):
+    """Restrictions that guards have matched at the gate at least once.
+    SUBQUERY: see queries.flagged_people() / queries.flagged_vehicles()."""
+    services.expire_due()
+    kind = request.GET.get("kind", "all")
+    if kind not in ("all", services.PERSON, services.VEHICLE):
+        kind = "all"
+    people, vehicles = queries.flagged_people(), queries.flagged_vehicles()
+    stats = {services.PERSON: _attempts("matched_person"), services.VEHICLE: _attempts("matched_vehicle")}
+    sources = {services.PERSON: people, services.VEHICLE: vehicles}
+    items = []
+    for k, qs in sources.items():
+        if kind not in ("all", k):
+            continue
+        for obj in qs:
+            row = _card(k, obj)
+            st = stats[k].get(obj.pk, {})
+            row.update(attempts=st.get("total", 0), denied=st.get("denied", 0), last=st.get("last"),
+                       is_active=obj.status == RestrictionStatus.ACTIVE)
+            items.append(row)
+    items.sort(key=lambda r: (r["last"] is not None, r["last"]), reverse=True)
+    return render(request, "guard/flagged.html", {
+        "items": items, "kind": kind,
+        "counts": {"all": people.count() + vehicles.count(), "person": people.count(), "vehicle": vehicles.count()},
     })
